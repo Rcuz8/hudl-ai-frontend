@@ -1,0 +1,23 @@
+.viewdata {
+    padding: 25px;
+}
+
+.split {
+    display: grid;
+    grid-template-columns: repeat(2, 450px);
+    justify-content: center;
+    padding: 5px;
+    margin: 10px;
+}
+.splitchild {
+    text-align: center;
+    margin: 15px;
+}
+.scrollable {
+    max-height: 300px;
+    overflow-y: scroll;
+}
+
+.genmodelbtn {
+    margin: 10px;
+}
