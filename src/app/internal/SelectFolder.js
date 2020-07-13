@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Button, ProgressBar } from 'react-bootstrap';
-import { URLs } from './Helper-Files/constants';
+import { URLs } from '../../helpers/constants';
 
 /* HELPERS */
 

@@ -1,16 +1,21 @@
-.App {
-    margin: 20px;
-}
+
 .json {
-    padding: 12px;
-    font-size: 20px;
-    margin: 10px;
+    padding: 3px 5px;
+    font-size: 14px;
+    margin: 3px;
     background-color: whitesmoke;
     /* border-bottom: 2px solid black; */
     border-top: 0px;
+    cursor: pointer;
     /* width: intrinsic;
     width: -moz-max-content;
     width: -webkit-max-content;  */
+}
+
+.json:hover {
+    background-color: orange;
+    background: rgb(255,140,0);
+    color: white;
 }
 
 .jsonwrapper {
@@ -38,6 +43,3 @@
     margin: 20px;
 }
 
-h1 {
-    margin: 40px;
-}

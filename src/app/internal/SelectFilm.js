@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Button, ProgressBar } from 'react-bootstrap';
-import { URLs } from './Helper-Files/constants';
-import cleanse, {retokenize} from './Cleanse';
+import { URLs } from '../../helpers/constants';
+import cleanse, {retokenize} from '../../Cleanse';
 
 /* VERIFY USER SELECTION */
 function VerifyChoice_Modal(props) {

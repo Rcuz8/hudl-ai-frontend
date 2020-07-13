@@ -1,0 +1,22 @@
+.itemlist {
+  width:  300px;
+  border: 1px solid black;
+} 
+
+.itemlist > thead {
+  background-color: #404040;
+  color: white;
+}
+
+.itemlist > tbody > tr {
+  border-bottom: 1px solid black;
+}
+.itemlist > tbody > tr:nth-child(even) > td {
+  background-color: #DDD;
+}
+.itemlist > thead > tr {
+  border-bottom: 2px solid black;
+}
+
+
+

@@ -1,5 +1,5 @@
 import React, {useState} from "react";
-import { NN, NNComp } from './NN';
+import { NN, NNComp } from '../../NN';
 import { DropdownButton, Dropdown, Button, Modal } from 'react-bootstrap';
 import SelectableContext from "react-bootstrap/SelectableContext";
 import './nn.css';
