@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { withRouter } from 'react-router-dom'
-import { ROUTES, URLs } from '../helpers/constants'
+import { ROUTES, URLs, socket_get } from '../helpers/constants'
 import axios from 'axios';
 /*/  New Client Page   /*/
 
@@ -33,8 +33,8 @@ function NewClient(props) {
   const [state, setState] = useState(INITIAL_STATE)
 
   const create = () => {
- 
-    axios.get(URLs.PY_NEW_CLIENT, {params: state})
+    let {email, password, name, phone, hudl_email, hudl_pass} = state
+    socket_get(URLs.PY_NEW_CLIENT, email, password, name, phone, hudl_email, hudl_pass)
       .then(({data}) => {
           console.log('User Record created. \n')
           console.log(data)

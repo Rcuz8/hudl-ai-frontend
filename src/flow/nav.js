@@ -26,6 +26,9 @@ const NavigationAuth = (props) => (
       <NavLink activeStyle={active_item} to={ROUTES.ACCOUNT}>Account</NavLink>
     </li>
     <li>
+      <NavLink activeStyle={active_item} to={ROUTES.PREDICT}>Game Time</NavLink>
+    </li>
+    <li>
       <NavLink activeStyle={active_item} to={ROUTES.NEW_GAME_ANALYSIS}>New Game Analysis</NavLink>
     </li>
     <li>
@@ -35,16 +38,22 @@ const NavigationAuth = (props) => (
       <NavLink activeStyle={active_item} to={ROUTES.NEW_CLIENT}>New Client</NavLink>
     </li>
     <li>
+      <NavLink activeStyle={active_item} to={ROUTES.DATA_QUALITY}>Data Quality</NavLink>
+    </li>
+    <li>
       <button onClick={() => props.db.doSignOut()}>Sign Out</button>
     </li>
   </ul>
   :
-  <ul>
+  <ul class={styles.navbar}>
     <li>
       <NavLink exact activeStyle={active_item} to={ROUTES.LANDING}>Landing</NavLink>
     </li>
     <li>
       <NavLink activeStyle={active_item} to={ROUTES.HOME}>Home</NavLink>
+    </li>
+    <li>
+      <NavLink activeStyle={active_item} to={ROUTES.PREDICT}>Game Time</NavLink>
     </li>
     <li>
       <NavLink activeStyle={active_item} to={ROUTES.ACCOUNT}>Account</NavLink>
@@ -59,7 +68,7 @@ const NavigationAuth = (props) => (
 );
  
 const NavigationNonAuth = () => (
-  <ul>
+  <ul class={styles.navbar}>
     <li>
       <NavLink exact activeStyle={active_item} to={ROUTES.LANDING}>Landing</NavLink>
     </li>

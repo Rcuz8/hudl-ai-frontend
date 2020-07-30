@@ -92,7 +92,12 @@ export function retokenize(data_matrix_list) {
 
   return data_str
 }
+/*
+  // a,b,c!!!d,e,f###a,b,c!!!d,e,f -> [[['a','b','c'], ['d','e','f']], [['a','b','c'], ['d','e','f']]]
+*/
+export const untokenize = (str) => str.split(TKN_3).map(item=>item.split(TKN_2).map(item => item.split(TKN_1)))
 
+export const token_swap = (str) => str.split(TKN_2).join('\n')
 
 export function cleaned_withParams(splitdata, used_indices) {
   let trimmed_data = trim_data_width(splitdata, used_indices);

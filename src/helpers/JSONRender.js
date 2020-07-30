@@ -55,6 +55,8 @@ class JSONComponent extends React.Component {
 
     render() {
         let json = this.state.data;
+        if (json === null || json === undefined)
+            return <div>No data to show.</div>
         let depth = this.state.depth;
         let jarray = iterable(json);
         let html = (

@@ -13,8 +13,8 @@ import React, {
     TKN_3
   } from '../../helpers/constants'
   import JSONRender from '../../helpers/JSONRender'
-  import cleanse, {
-    retokenize
+  import {
+    token_swap
   } from '../../helpers/Cleanse'
   
   function removeItem(arr, value) {
@@ -99,32 +99,30 @@ import React, {
           // get full data & headers
           let headers = combined_data.headers
           let data = combined_data.data
-          // split data by film
-        //   let EACH_FILM_DATA_UNPARSED = data.split(TKN_3)
-
-          let combined_data = data.split(TKN_3)
+          
           let film_names = selections.map(sel => sel.name)
           console.log('Recieved Complete Node.js Server Response: ')
           console.log('\tHeaders: ')
           console.log(headers)
-          console.log('\tPre-tokenization Datum: ')
-          console.log(combined_data)
+          console.log('\tPre-tokenization-Swap Datum: ')
+          console.log(data)
           console.log('\tFilm Names: ')
           console.log(film_names)
-          let datum = retokenize(combined_data)
-          console.log('\tPost-tokenization Datum: ')
+          let datum = token_swap(data)
+          console.log('\tPost-tokenization-Swap Datum: ')
           console.log(datum)
-          props.callback({headers: headers, data: combined_data, film_names: film_names});
+          props.callback({headers: headers, data: datum, film_names: film_names});
 
           console.log('Completed hudl data retrieval. ')
+          
         }
       }
     }
 
     const Progress = (
         <div class='logging_in'>
-            <h2>Retrieving selected Training Data..</h2>
-            <ProgressBar now={progress} />
+            <h2>Retrieving selected Data..</h2>
+            <ProgressBar animated variant="success" now={progress} />
         </div>
     )
 
@@ -144,7 +142,7 @@ import React, {
           }
         </div>
   
-        <Button onClick={() => submit()}>Submit Selection</Button>
+        <Button onClick={() => submit()}>Generate Analysis</Button>
         <h3>Directory:</h3>
         {JSONRender(DIRECTORY_DATA, Selected_Film_Clip)}
         </>
