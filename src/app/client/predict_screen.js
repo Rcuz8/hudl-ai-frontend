@@ -8,6 +8,7 @@ import { DataFrame } from "pandas-js";
 import * as con from "../../helpers/constants";
 import styles from "../../flow/styles/nga.module.css";
 import { models } from "@tensorflow/tfjs";
+import { films_data as test_films_data } from '../../test/testdata';
 const TEST_MODE = false;
 
 const capitalize = (s) => {
@@ -180,8 +181,10 @@ const get_game_dataframe = async (id, db) => {
   } else {
     var fetched_films = await db.collection("games_data").doc(id).get();
     fetched_films = fetched_films.data();
-    const films_data = fb_data_to_matrix(fetched_films);
-    console.log("Arrived at Film(s) Data:\n");
+    var films_data = fb_data_to_matrix(fetched_films);
+    
+    console.log("Arrived at Film(s) Data:\n", films_data)
+    films_data = pd.pandas_reformat(films_data, data_headers)
     df = new DataFrame(films_data);
     console.log("Arrived at DataFrame:\n", df.toString());
   }
@@ -423,7 +426,7 @@ export default function Predict_screen(props) {
           <div class="wider">Top 3 Plays</div>
           {form.plays.map((play) => (
             <div class="lt-run-time-data">
-              <div>{capitalize(play.name)}</div>
+              <div>{play.name ? capitalize(play.name) : 'NO DATA'}</div>
               <ProgressBar
                 now={Math.round(play.prob * 100)}
                 style={{ height: "25px" }}
@@ -440,6 +443,7 @@ export default function Predict_screen(props) {
   };
 
   const generate_form_prediction = async () => {
+    console.log('Gen Pred for Frame: ', state.df.toString())
     // Get Predictions
     const predictions = await get_predictions(
       state.models.off_form,
@@ -575,7 +579,7 @@ export default function Predict_screen(props) {
       <table class={styles.itemlist}>
         <thead>
           <tr>
-            <th>Client Name</th>
+            <th>Game</th>
           </tr>
         </thead>
         <tbody>{c_Games}</tbody>
@@ -709,8 +713,8 @@ export default function Predict_screen(props) {
                     <div>
                       {item.plays.map((play) => (
                         <div>
-                          {capitalize(play.name)} (
-                          {Number.isNaN(play.prob)
+                          {play.name ? capitalize(play.name) : 'NO DATA'} (
+                          {Number.isNaN(play.prob) 
                             ? "NO DATA"
                             : Math.round(play.prob * 100) + "%"}
                           )

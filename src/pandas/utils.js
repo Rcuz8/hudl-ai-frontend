@@ -27,7 +27,7 @@ function formation_frame(frame, form) {
 }
 
 function runcount(frame, pct=true) {
-  const lower = adjust(frame.get('PLAY TYPE'),(item) => item.toLowerCase())
+  const lower = adjust(frame.get('PLAY TYPE'),(item) => item ? item.toLowerCase() : item)
   const filtered_frame = frame.filter(lower.eq('run'))
   if (pct)
     return Array.from(filtered_frame.index).length / frame.length
