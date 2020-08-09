@@ -1,0 +1,47 @@
+.acct-view {
+  background-color: var(--color1);
+  height: calc(100vh - 70px); /* WARN:  NAVBAR HEIGHT */
+  display: grid;
+  justify-content: center;
+  align-content: center;
+  justify-items: center;
+  align-items: center;
+}
+
+.acct-view > div > div {
+  height: 300px;
+  width: 550px;
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.5);
+}
+
+.acct-view > div > h3 {
+  color: white;
+  text-align: left;
+  font-weight: bold;
+}
+
+.acct-grid {
+  padding: 5px 20px;
+  display: grid;
+  grid-template-columns: auto auto;
+}
+
+.acct-grid > div > div {
+  padding: 5px 20px 5px 0px;
+  text-align: left;
+  font-size: 22px;
+  overflow-x: scroll;
+  word-wrap: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 1; /* number of lines to show */
+  -webkit-box-orient: vertical;
+}
+
+/* .acct-view > div > div > div > div > div {
+  padding: 0px 10px;
+  display: grid;
+  grid-auto-columns: 100px 100px;
+} */

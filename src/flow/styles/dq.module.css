@@ -2,7 +2,8 @@
 .films_container {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  width: 80%;
+  padding: 10%;
+  background-color: var(--color1);
   margin: auto;
 }
 
@@ -12,7 +13,7 @@
   border-radius: 10px;
   margin: 15px;
   background-color: rgb(250,250,250);
-  box-shadow: 4px 4px 4px lightgray;
+  box-shadow: 10px 10px 10px rgba(0, 0, 0, 0.5);
 }
 
 /* .films_container > div > div {
@@ -33,7 +34,9 @@
 
 .missings {
   overflow-y: scroll;
+  overflow-x: hidden;
   height: 150px;
+  min-width: 150px;
 }
 
 /* width */
@@ -45,15 +48,13 @@
 .missings::-webkit-scrollbar-track {
   box-shadow: inset 2 0 5px grey; 
   border-radius: 10px;
+  width: 8px;
+
 }
  
 /* Handle */
 .missings::-webkit-scrollbar-thumb {
   background: lightgrey; 
   border-radius: 10px;
-}
-
-/* Handle on hover */
-.missings::-webkit-scrollbar-thumb:hover {
-  background: #934e00; 
+  width: 8px;
 }

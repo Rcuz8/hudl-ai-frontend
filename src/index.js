@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
- import { URLs, socket_get } from './helpers/constants'
+ import { URLs, socket_get, TEST_MODE } from './helpers/constants'
 import './index.css';
 import './app/internal/App.css'
 import Axios from 'axios'
@@ -20,9 +20,15 @@ const Index = (props) => {
       setUser(authUser)
       try {
         let par = {params:{uid:authUser.uid}}
-        socket_get(URLs.PY_USERINFO,par).then((res) => {
-          setAdmin(res.data['isAdmin'] === true)
-        })
+        if (TEST_MODE) {
+          setAdmin(true)
+
+        } else {
+          socket_get(URLs.PY_USERINFO,par).then((res) => {
+            setAdmin(res.data['isAdmin'] === true)
+          })
+        }
+        
       } catch (e) {}
     
     }); 

@@ -13,12 +13,31 @@ code {
 }
 
 .routecontainer {
-  padding: 10px;
 }
 
 
 /* Inactive tab */
 .tabs > * {
     color: grey;
+    
+}
+.tabs:hover {
+  color: grey;
+}
+.tabs > *:hover {
+  color: grey;
+}
+.tabs-dk {
+  background-color: var(--color3);
 }
 
+.tabs-dk > * {
+  font-size: 20px;
+  color: lightgray;
+}
+.tabs-dk:hover {
+color: lightgray;
+}
+.tabs-dk > *:hover {
+  color: lightgray;
+  }

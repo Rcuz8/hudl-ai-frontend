@@ -8,50 +8,17 @@ import { DataFrame } from "pandas-js";
 import * as con from "../../helpers/constants";
 import styles from "../../flow/styles/nga.module.css";
 import { models } from "@tensorflow/tfjs";
-import { films_data as test_films_data } from '../../test/testdata';
-const TEST_MODE = false;
+import {
+  films_data as test_films_data,
+  games as testgames,
+  game_dict as test_games_dict,
+} from "../../test/testdata";
+const TEST_MODE = con.TEST_MODE;
 
 const capitalize = (s) => {
   if (typeof s !== "string") return "";
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
-
-// // Percent format
-// const mrd = pc => Math.round(pc * 100) + "%";
-
-// Sample Response Info
-const SRIs = [
-  {
-    name: "I Form",
-    prob: 0.25,
-    run_prob: 0.55,
-    plays: [
-      { name: "toss", prob: 0.15 },
-      { name: "sweep", prob: 0.12 },
-      { name: "jet", prob: 0.1 },
-    ],
-  },
-  {
-    name: "Wing T",
-    prob: 0.15,
-    run_prob: 0.74,
-    plays: [
-      { name: "dive trap", prob: 0.27 },
-      { name: "sweep", prob: 0.18 },
-      { name: "jet", prob: 0.13 },
-    ],
-  },
-  {
-    name: "Spread",
-    prob: 0.08,
-    run_prob: 0.35,
-    plays: [
-      { name: "hitches", prob: 0.15 },
-      { name: "sweep", prob: 0.12 },
-      { name: "jet", prob: 0.1 },
-    ],
-  },
-];
 
 const after = (str, sub) => str.substring(str.indexOf(sub) + sub.length);
 const before = (str, sub) => str.substring(0, str.indexOf(sub));
@@ -66,15 +33,6 @@ const loadhttp = (url, model_id, model_name) => {
       delim,
   });
 };
-
-// Sample Formation info  -> Same format as SRIs (superset)
-const FIs = SRIs;
-
-const queries = [
-  ["sampleid", "mymodel"],
-  ["2ceaf5db41b740108cde15a6c6f36d33", "postalignplay"],
-  ["id1243onjun29", "postalignplay"],
-];
 
 const fetch_model = async (storage, model_id, model_name) => {
   const model_url = async () =>
@@ -97,7 +55,7 @@ const mock_form_model = (nforms) => {
   const model = tf.sequential();
 
   model.add(
-    tf.layers.dense({ units: 20, inputShape: [10], activation: "relu" })
+    tf.layers.dense({ units: 20, inputShape: [11], activation: "relu" })
   );
   model.add(tf.layers.dense({ units: nforms, activation: "softmax" }));
   model.compile({ optimizer: "sgd", loss: "meanSquaredError" });
@@ -113,7 +71,7 @@ const mock_pt_model = (nforms) => {
   model.add(
     tf.layers.dense({
       units: 20,
-      inputShape: [10 + nforms],
+      inputShape: [11 + nforms],
       activation: "relu",
     })
   );
@@ -131,7 +89,7 @@ const mock_play_model = (nforms, nplays) => {
   model.add(
     tf.layers.dense({
       units: 20,
-      inputShape: [10 + nforms],
+      inputShape: [11 + nforms],
       activation: "relu",
     })
   );
@@ -182,9 +140,9 @@ const get_game_dataframe = async (id, db) => {
     var fetched_films = await db.collection("games_data").doc(id).get();
     fetched_films = fetched_films.data();
     var films_data = fb_data_to_matrix(fetched_films);
-    
-    console.log("Arrived at Film(s) Data:\n", films_data)
-    films_data = pd.pandas_reformat(films_data, data_headers)
+
+    console.log("Arrived at Film(s) Data:\n", films_data);
+    films_data = pd.pandas_reformat(films_data, data_headers);
     df = new DataFrame(films_data);
     console.log("Arrived at DataFrame:\n", df.toString());
   }
@@ -197,47 +155,7 @@ const get_game_info = async (id, db) => {
 
   if (TEST_MODE) {
     fetched_info = {
-      dictionary: {
-        OFF_FORM: [
-          "BIG",
-          "TRIO",
-          "TRIPS",
-          "DAGGER",
-          "TREY",
-          "DUCK",
-          "DEUCE",
-          "EMPTY",
-          "DOUBLES",
-          "TRUCK",
-          "BELL",
-          "BANG",
-          "BOX",
-          "DUDE",
-          "TRAP",
-          "EXTRA",
-          "DAB",
-          "TRASH",
-          "DUO",
-          "ROLL",
-        ],
-        OFF_PLAY: [
-          "NY",
-          "GREEN BAY",
-          "WASHINGTON",
-          "HOUSTON",
-          "NASA",
-          "ATLANTA",
-          "AKRON",
-          "JOKER",
-          "DENVER",
-          "LACES",
-          "DETROIT",
-          "MINNESOTA",
-          "NEW ENGLAND",
-          "KC",
-        ],
-        PLAY_TYPE: ["run", "pass"],
-      },
+      dictionary: test_games_dict,
       created: "today",
     };
   } else {
@@ -280,6 +198,22 @@ const fb_data_to_matrix = (fb_data, concat = true) => {
   else return data;
 };
 
+const INIT_STATE = {
+  models: {
+    off_form: null,
+    play_type: null,
+    off_play: null,
+  },
+  dicts: {
+    off_form: null,
+    play_type: null,
+    off_play: null,
+    prev_play_type: null,
+    hash: null,
+  },
+  df: null,
+};
+
 export default function Predict_screen(props) {
   var game_id,
     uid = props.user.uid;
@@ -291,7 +225,7 @@ export default function Predict_screen(props) {
   }
 
   const [games, setGames] = useState(null);
-
+  const [currgame, setcurrgame] = useState(null);
   const [form, setForm] = useState(null);
   const [scoreUs, setScoreUs] = useState(0);
   const [scoreThem, setScoreThem] = useState(0);
@@ -302,37 +236,45 @@ export default function Predict_screen(props) {
   const [hash, setHash] = useState("L");
   const [ppt, setPPT] = useState("Run");
   const [ourSide, setSide] = useState(false); // Ball in Offense's own territory
+  const [made_change, setchanged] = useState(true)
 
-  const [state, setState] = useState({
-    models: {
-      off_form: null,
-      play_type: null,
-      off_play: null,
-    },
-    dicts: {
-      off_form: null,
-      play_type: null,
-      off_play: null,
-      prev_play_type: null,
-      hash: null
-    },
-    df: null,
-  });
+  const [state, setState] = useState(INIT_STATE);
   const [fetching_models, set_fetching_models] = useState(null);
 
   const [pre_align_results, setpar] = useState(null);
 
   useEffect(() => {
-    con.games_get(uid).then((response) => {
-      console.log("Retrieved games ", response["data"]);
-      setGames(response["data"]);
-    });
+    if (TEST_MODE) {
+      const run = async () => {
+        const sample = (arr) => arr[Math.floor(Math.random() * arr.length)];
+        setGames(testgames);
+        // await selected_game(testgames[2]);
+        // await generate_form_prediction();
+        // await generate_play_prediction(sample(test_games_dict["OFF_FORM"]));
+      };
+      run();
+    } else {
+      con.games_get(uid).then((response) => {
+        console.log("Retrieved games ", response["data"]);
+        setGames(response["data"]);
+      });
+    }
   }, [setGames, uid]);
 
   const compile_input = (withForm = null) => {
+    if (!state.dicts.hash) {
+      alert("One moment..");
+      return;
+    }
     // One-hot encode categoricals (mdf = modified variable)
-    let mdf_hash = keras.one_hot(state.dicts.hash.indexOf(hash) + 1, state.dicts.hash.length);
-    let mdf_ppt = keras.one_hot(state.dicts.prev_play_type.indexOf(ppt) + 1, state.dicts.prev_play_type.length);
+    let mdf_hash = keras.one_hot(
+      state.dicts.hash.indexOf(hash) + 1,
+      state.dicts.hash.length
+    );
+    let mdf_ppt = keras.one_hot(
+      state.dicts.prev_play_type.indexOf(ppt) + 1,
+      state.dicts.prev_play_type.length
+    );
     let mdf_form = !withForm
       ? null
       : keras.one_hot(
@@ -387,12 +329,30 @@ export default function Predict_screen(props) {
   const get_predictions = async (model, dict, withForm = null) => {
     // Compile input
     const input = compile_input(withForm);
+    // Should pass compliance assertion
+    const inputShape = model.inputLayers[0].batchInputShape[1];
+    if (input.length !== inputShape) {
+      console.log(model);
+      let msg =
+        'Model inputs != "Compiled Inputs". Provided ' +
+        input.length +
+        " Expected " +
+        inputShape +
+        "\n\nInput: " +
+        input;
+      throw new Error(msg);
+    }
     // Generate raw predictions
     const raw_predictions = await model.predict(tf.tensor2d([input])).data();
     // Should pass compliance assertion
     if (dict.length !== raw_predictions.length)
-      throw new Error("Failed Compliance on model with dict: " + dict + 
-      ' => Actual Pred. = ' + raw_predictions.length + ' items');
+      throw new Error(
+        "Failed Compliance on model with dict: " +
+          dict +
+          " => Actual Pred. = " +
+          raw_predictions.length +
+          " items"
+      );
     // Map names to predictions
     const mapped_predictions = dict.map((el, i) => ({
       name: el,
@@ -407,26 +367,48 @@ export default function Predict_screen(props) {
       return (
         <div>
           {/* Results */}
-          <div class="lt-run-time-header">
-            <div>RUN</div>
-            <div>
-              {Number.isNaN(form.run_prob)
-                ? "NO DATA"
-                : Math.round(form.run_prob * 100)}
-              %
-            </div>
-            <div>PASS</div>
-            <div>
-              {Number.isNaN(form.run_prob)
-                ? "NO DATA"
-                : 100 - Math.round(form.run_prob * 100)}
-              %
-            </div>
-          </div>
-          <div class="wider">Top 3 Plays</div>
+          {
+              Number.isNaN(form.run_prob) || form.run_prob >= 0.5 ? (
+                <div class="lt-run-time-header">
+                <div style={{fontWeight: 'bold', fontSize: '24px'}}>Run</div>
+                <div style={{fontSize: '24px'}}>
+                  {Number.isNaN(form.run_prob)
+                    ? "NO DATA"
+                    : Math.round(form.run_prob * 100)}
+                  %
+                </div>
+                <div style={{fontWeight: 'bold', fontSize: '24px'}}>Pass</div>
+                <div style={{fontSize: '24px'}}>
+                  {Number.isNaN(form.run_prob)
+                    ? "NO DATA"
+                    : 100 - Math.round(form.run_prob * 100)}
+                  %
+                </div>
+              </div>
+            ) : (
+              <div class="lt-run-time-header">
+                <div style={{fontWeight: 'bold', fontSize: '18px'}}>Pass</div>
+                <div>
+                  {Number.isNaN(form.run_prob)
+                    ? "NO DATA"
+                    : 100 - Math.round(form.run_prob * 100)}
+                  %
+                </div>
+                <div style={{fontWeight: 'bold', fontSize: '18px'}}>Run</div>
+                <div>
+                  {Number.isNaN(form.run_prob)
+                    ? "NO DATA"
+                    : Math.round(form.run_prob * 100)}
+                  %
+                </div>
+              </div>
+            )
+          }
+          
+          <div class="wider" style={{fontSize: '16px', fontWeight: 'bold'}}>Top 3 Plays</div>
           {form.plays.map((play) => (
             <div class="lt-run-time-data">
-              <div>{play.name ? capitalize(play.name) : 'NO DATA'}</div>
+              <div>{play.name ? capitalize(play.name) : "NO DATA"}</div>
               <ProgressBar
                 now={Math.round(play.prob * 100)}
                 style={{ height: "25px" }}
@@ -443,7 +425,12 @@ export default function Predict_screen(props) {
   };
 
   const generate_form_prediction = async () => {
-    console.log('Gen Pred for Frame: ', state.df.toString())
+    setchanged(false)
+    if (!state.df) {
+      alert("One moment..");
+      return;
+    }
+    console.log("Gen Pred for Frame: ", state.df.toString());
     // Get Predictions
     const predictions = await get_predictions(
       state.models.off_form,
@@ -468,9 +455,20 @@ export default function Predict_screen(props) {
     console.log("Prediction info:", prediction_info);
 
     setpar(prediction_info);
+    return null;
   };
 
   const generate_play_prediction = async (selected_formation) => {
+    if (
+      !(
+        state.models.play_type &&
+        state.models.off_form &&
+        state.models.off_play
+      )
+    ) {
+      alert("One moment..");
+      return;
+    }
     // Get Predictions
     const pt_predictions = await get_predictions(
       state.models.play_type,
@@ -501,7 +499,9 @@ export default function Predict_screen(props) {
     setForm(prediction_info);
   };
 
-  const selected_game = async (game_id) => {
+  const selected_game = async (game) => {
+    let game_id = game.id;
+    setcurrgame(game);
     set_fetching_models(true);
     try {
       // Load DataFrame
@@ -509,6 +509,7 @@ export default function Predict_screen(props) {
 
       // Load Dictionaries / Scalers
       const info = await get_game_info(game_id, props.firebase.db);
+
       const dict = info["dictionary"];
       const dicts = {
         off_form: dict["OFF_FORM"],
@@ -516,10 +517,9 @@ export default function Predict_screen(props) {
         off_play: dict["OFF_PLAY"],
         prev_play_type: dict["PREV_PLAY_TYPE"],
         hash: dict["HASH"],
-        
       };
 
-      console.log('Dictionaries: ' + dicts)
+      console.log("Dictionary: ", dict);
 
       var paf, pat, pap;
       if (!TEST_MODE) {
@@ -555,11 +555,28 @@ export default function Predict_screen(props) {
     }
   };
 
+  const clear_all = () => {
+    setcurrgame(null);
+    setForm(null);
+    setScoreThem(0);
+    setScoreUs(0);
+    setSide(false);
+    set_fetching_models(false);
+    setqtr(1);
+    setydln(50);
+    setHash("L");
+    setPPT("Run");
+    setState(INIT_STATE);
+    setpar(null)
+  };
+
+  const changed = () => {
+    setchanged(true)
+  }
+
   const c_Games = games
-    ? games.map((game, index) => (
-        <tr onClick={() => selected_game(game.id)}>
-          <td class="json">{game.name}</td>
-        </tr>
+    ? games.map((game) => (
+        <div onClick={() => selected_game(game)}>{game.name}</div>
       ))
     : null;
 
@@ -575,160 +592,199 @@ export default function Predict_screen(props) {
   if (all_fetched && fetching_models) set_fetching_models(false);
 
   return (
-    <div>
-      <table class={styles.itemlist}>
-        <thead>
-          <tr>
-            <th>Game</th>
-          </tr>
-        </thead>
-        <tbody>{c_Games}</tbody>
-      </table>
-      <hr />
+    <div class="predview">
+      <div
+        style={{
+          marginTop: "200px",
+          display: all_fetched || fetching_models ? "none" : "block",
+        }}
+      >
+        <div style={{ width: "600px", margin: "auto" }}>
+          <h3 style={{ textAlign: "left", fontWeight: "bold", margin: "10px" }}>
+            Select Game.
+          </h3>
+          <div class="list-with-shadow-items">{c_Games}</div>
+        </div>
+      </div>
       {all_fetched ? (
+        /*  Application View  */
         <div class="lt-grid-container">
-          <div class="wider">
-            <h2>Configure</h2>
-          </div>
-          <div class="lt-score">
-            <div>US</div>
-            <div>THEM</div>
-            <input
-              class="input-box"
-              name="score-us"
-              onChange={(ev) => setScoreUs(ev.target.value)}
-              type="number"
-              value={scoreUs}
-            />
-            <input
-              class="input-box"
-              name="score-them"
-              onChange={(ev) => setScoreThem(ev.target.value)}
-              type="number"
-              value={scoreThem}
-            />
-            <div>QUARTER</div>
-            <select
-              class="input-box"
-              onChange={(ev) => setqtr(parseInt(ev.target.value))}
+          {/* Game Title */}
+          <div class="lt-game-title">
+            <h2>{currgame ? currgame.name : null}</h2>
+            <p
+              style={{ textDecoration: "underline" }}
+              onClick={() => clear_all()}
+              class='lt-pointer'
             >
-              {[1, 2, 3, 4].map((item) => (
-                <option value={item}>{item}</option>
-              ))}
-            </select>
+              Change
+            </p>
           </div>
-          <div class="lt-scenario">
-            <div>DOWN</div>
-            <select
-              class="input-box"
-              onChange={(ev) => setdn(parseInt(ev.target.value))}
-            >
-              {[1, 2, 3, 4].map((item) => (
-                <option value={item}>{item} </option>
-              ))}
-            </select>
-            <div>DISTANCE</div>
-            <input
-              class="input-box"
-              onChange={(ev) => setdist(parseInt(ev.target.value))}
-            />
-            <div>YD LN</div>
-            <div>
+          {/* Scoreboard */}
+          <div class="lt-score_qtr lt-split">
+            <div class="lt-score_qtr lt-split">
+              <div>US</div>
+              <div>THEM</div>
               <input
                 class="input-box"
-                onChange={(ev) => setydln(parseInt(ev.target.value))}
+                name="score-us"
+                onChange={(ev) => {changed(); setScoreUs(ev.target.value)}}
+                type="number"
+                value={scoreUs}
               />
-              <label for="onOurs">Off. Terr?</label>
               <input
-                type="checkbox"
-                name="onOurs"
-                onChange={(ev) => setSide(ev.target.value)}
+                class="input-box"
+                name="score-them"
+                onChange={(ev) => {changed(); setScoreThem(ev.target.value)}}
+                type="number"
+                value={scoreThem}
               />
-              {/* <div style={{display: 'grid', gridAutoColumns: 'repeat(2, 1fr)'}}>
-        <input class="input-box" onChange={(ev) => setydln(ev.target.value)} />
-        <div>
-          <label for='onOurs'>Off. Terr?</label>
-          <input type='checkbox' name='onOurs' onChange={(ev) => setydln(ev.target.value)} />
-        </div> */}
             </div>
+            <div class="lt-score_qtr">
+              <div>QTR</div>
+              <select
+                class="input-box"
+                onChange={(ev) => {
+                  changed(); 
+                  if (!isNaN(ev.target.value)) 
+                    setqtr(parseInt(ev.target.value))
+                  }
+                }
+              >
+                {[1, 2, 3, 4].map((item) => (
+                  <option value={item}>{item}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {/* Core Grid */}
+          {/* Section Headers */}
+          <div>
+            <h4>Pre-Alignment</h4>
+            <div
+              style={{
+                margin: "5px 0px",
+                height: "1.5px",
+                backgroundColor: "white",
+              }}
+            ></div>
+          </div>
+          <div>
+            <h4>Post-Alignment</h4>
+            <div
+              style={{
+                margin: "5px 0px",
+                height: "1.5px",
+                backgroundColor: "white",
+              }}
+            ></div>
+          </div>
+          
+          {/* SCENARIO */}
 
-            <div>HASH</div>
-            <select
-              class="input-box"
-              onChange={(ev) => setHash(ev.target.value)}
-            >
-              {state.dicts.hash ? state.dicts.hash.map((item) => (
-                <option value={item}>{item} </option>
-              )) :  null}
-            </select>
-            <div>LAST PLAY</div>
-            <select
-              class="input-box"
-              onChange={(ev) => setPPT(ev.target.value)}
-            >
-              {state.dicts.prev_play_type ? state.dicts.prev_play_type.map((item) => (
-                <option value={item}>{item} </option>
-              )) : null}
-            </select>
+          {/* Scenario - Group Headers */}
+          <div class="lt-scenerio-head">
+            <div style={{ float: "left" }}>Scenario</div>
           </div>
-          <div class="wider">
-            <button onClick={() => generate_form_prediction()}>Generate</button>
-            <h2 style={{ marginTop: "20px" }}>Analyze</h2>
+          <div class="lt-scenerio-head">
+            <div style={{ float: "left" }}>Scenario</div>
           </div>
-          <div class="lt-prediction">
-            <div class="lt-prediction-header">PRE-ALIGNMENT</div>
-            <div class="lt-prediction-data">
-              <div>FORM</div>
-              <div>TYPE</div>
-              <div>PLAY</div>
+
+          {/* Scenario - Pre-Align Group */}
+          <div class="lt-scenario-container lt-scenario-platform">
+            <div class="lt-scenario-content lt-scenario-content-multi">
+              <div>
+                <div>DN / DIST</div>
+                <div class="lt-split">
+                  <select
+                    class="input-box"
+                    onChange={(ev) => {
+                      changed(); 
+                      if (!isNaN(ev.target.value)) 
+                        setdn(parseInt(ev.target.value))
+                      }}
+                  >
+                    {[1, 2, 3, 4].map((item) => (
+                      <option value={item}>{item} </option>
+                    ))}
+                  </select>
+                  <input
+                    class="input-box"
+                    onChange={(ev) => {
+                      changed(); 
+                      if (!isNaN(ev.target.value)) 
+                        setdist(parseInt(ev.target.value))
+                      }}
+                    value={dist}
+                  />
+                </div>
+              </div>
+              <div>
+                <div>On the..</div>
+                <div class="lt-split">
+                  <input
+                    class="input-box"
+                    onChange={(ev) => {
+                      changed(); 
+                      if (!isNaN(ev.target.value)) 
+                        setydln(parseInt(ev.target.value))
+                      }}
+                    value={ydln}
+                  />
+                  <button class="input-box" onClick={() => {changed(); setSide(!ourSide)}}>
+                    {ourSide ? "Off." : "Def."}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <div>Hash</div>
+                <select
+                  class="input-box"
+                  onChange={(ev) => {changed(); setHash(ev.target.value)}}
+                >
+                  {state.dicts.hash
+                    ? state.dicts.hash.map((item) => (
+                        <option value={item}>{item} </option>
+                      ))
+                    : null}
+                </select>
+              </div>
+              <div>
+                <div>Last Play</div>
+                <select
+                  class="input-box"
+                  onChange={(ev) => {changed(); setPPT(ev.target.value)}}
+                >
+                  {state.dicts.prev_play_type
+                    ? state.dicts.prev_play_type.map((item) => (
+                        <option value={item}>{item} </option>
+                      ))
+                    : null}
+                </select>
+              </div>
+              <div>
+              <div>&#8203;</div>
+                <div>
+                <button
+                class="stdbtn"
+                onClick={() => generate_form_prediction()}
+                disabled={!made_change}
+                style={{ float: "right", fontSize: '18px' }}
+              >
+                Generate
+              </button>
+                </div>
+              </div>
             </div>
-            {pre_align_results
-              ? pre_align_results.map((item) => (
-                  <div class="lt-prediction-data">
-                    <div>
-                      <div>
-                        {item.name} (
-                        {Number.isNaN(item.prob)
-                          ? "NO DATA"
-                          : Math.round(item.prob * 100) + "%"}
-                        )
-                      </div>
-                    </div>
-                    <div>
-                      <div>
-                        Pass (
-                        {Number.isNaN(item.run_prob)
-                          ? "NO DATA"
-                          : 100 - Math.round(item.run_prob * 100) + "%"}
-                        )
-                      </div>
-                      <div>
-                        Run (
-                        {Number.isNaN(item.run_prob)
-                          ? "NO DATA"
-                          : Math.round(item.run_prob * 100) + "%"}
-                        )
-                      </div>
-                    </div>
-                    <div>
-                      {item.plays.map((play) => (
-                        <div>
-                          {play.name ? capitalize(play.name) : 'NO DATA'} (
-                          {Number.isNaN(play.prob) 
-                            ? "NO DATA"
-                            : Math.round(play.prob * 100) + "%"}
-                          )
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              : null}
           </div>
-          <div class="lt-run-time">
-            <div>POST-ALIGNMENT</div>
-            <div class="lt-run-time-header">
-              <div>FORMATION</div>
+
+          {/* Scenario - Post-Align Group */}
+          <div
+            class="lt-scenario-container lt-scenario-platform lt-scenario-content"
+            style={{ justifyItems: "center" }}
+          >
+            <div>
+              <div >Formation</div>
               <select
                 class="input-box wide-box"
                 onChange={(opt) => changeFormation(opt.target.value)}
@@ -740,11 +796,101 @@ export default function Predict_screen(props) {
                   : null}
               </select>
             </div>
-            {get_run()}
-            <div class="wider">
-              <button>RESET</button>
-            </div>
           </div>
+
+          {/* RESULTS */}
+          
+          {/* Results - Group Headers */}
+          <div class="lt-scenerio-head">
+            <div style={{ float: "left" }}>Results</div>
+          </div>
+          <div class="lt-scenerio-head">
+            <div style={{ float: "left" }}>Results</div>
+          </div>
+
+          {/* Results - Pre-Align Group */}
+          <div class="lt-prediction lt-scenario-platform">
+            <div class="lt-prediction-data">
+              <div style={{fontWeight: 'bold', fontSize: '18px'}}>FORM</div>
+              <div style={{fontWeight: 'bold', fontSize: '18px'}}>TYPE</div>
+              <div style={{fontWeight: 'bold', fontSize: '18px'}}>PLAY</div>
+            </div>
+            <hr />
+            {pre_align_results
+              ? pre_align_results.map((item) => {
+                
+                const pass_component = (
+                  <div>
+                          Pass (
+                          {Number.isNaN(item.run_prob)
+                            ? "NO DATA"
+                            : 100 - Math.round(item.run_prob * 100) + "%"}
+                          )
+                        </div>
+                )
+                const run_component = (
+                  <div>
+                          Run (
+                          {Number.isNaN(item.run_prob)
+                            ? "NO DATA"
+                            : Math.round(item.run_prob * 100) + "%"}
+                          )
+                        </div>
+                )
+
+                var runpass_component = null;
+                if (Number.isNaN(item.run_prob) || 
+                item.run_prob >= 0.5) {
+                  runpass_component = (
+                    <div>
+                      {run_component}
+                      {pass_component}
+                    </div>
+                  )
+                } else {
+                  runpass_component = (
+                    <div>
+                      {pass_component}
+                      {run_component}
+                    </div>
+                  )
+                }
+                
+                return  (
+                  <div>
+                    <div class="lt-prediction-data">
+                      <div>
+                        <div>
+                          {item.name} (
+                          {Number.isNaN(item.prob)
+                            ? "NO DATA"
+                            : Math.round(item.prob * 100) + "%"}
+                          )
+                        </div>
+                      </div>
+                      {runpass_component}
+                      <div>
+                        {item.plays.map((play) => (
+                          <div>
+                            {play.name ? capitalize(play.name) : "NO DATA"} (
+                            {Number.isNaN(play.prob)
+                              ? "NO DATA"
+                              : Math.round(play.prob * 100) + "%"}
+                            )
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <hr />
+                  </div>
+                )
+              })
+              : <p>Waiting on scenario selection..</p>}
+          </div>
+
+          <div class="lt-run-time lt-scenario-platform">
+            {get_run()}
+          </div> 
         </div>
       ) : fetching_models ? (
         <h2>Loading your info..</h2>

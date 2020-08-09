@@ -22,8 +22,8 @@ const App = React.memo((props) => {
   console.log('Render router')
   
 
-  const isAdmin = props.isAdmin
-  const user = props.user
+  var isAdmin = props.isAdmin
+  var user = props.user
   
 
   const fbpage = (cls) => 
@@ -67,14 +67,16 @@ const App = React.memo((props) => {
         <Route path={ROUTES.SIGN_IN} component={SignIn}/>
       </div>
    
+
+  // // TEST
+  // user = null
+  // isAdmin = false
+
   return <Router>
     
       <div>
-        {isAdmin ? <h2 style={{margin: '10px'}}>Viewing as Admin</h2> : null}
-        <Navigation authUser={user} isAdmin={isAdmin} firebase={props.firebase}/>
-  
-        <hr />
-  
+        {isAdmin && <h2 style={{margin: '10px'}}>Viewing as Admin</h2>}
+        {user && <Navigation authUser={user} isAdmin={isAdmin} firebase={props.firebase}/> }
         { routes }
       </div>
     </Router>

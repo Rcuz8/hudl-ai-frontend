@@ -4,6 +4,10 @@ import io from 'socket.io-client';
 const LOCAL_NODE_SERVER = 'localhost:9797';
 const LOCAL_PY_SERVER = 'http://127.0.0.1:8080'; // NOTE: SSL IN PROD MEANS HTTP -> HTTPS
 
+export const TEST_MODE = true;
+
+export const CompanyName = 'The Company'
+
 export const TKN_1 = ',';
 export const TKN_2 = '\n';
 export const TKN_3 = '###';

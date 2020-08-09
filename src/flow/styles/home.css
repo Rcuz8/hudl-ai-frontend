@@ -1,0 +1,10 @@
+.hm-view {
+  background-color: var(--color1);
+  height: calc(100vh - 70px); /* WARN:  NAVBAR HEIGHT */
+  display: grid;
+  color: white;
+  justify-content: center;
+  align-content: center;
+  justify-items: center;
+  align-items: center;
+}
