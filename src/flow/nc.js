@@ -12,6 +12,7 @@ const INITIAL_STATE = {
   name: '',
   hudl_email: '',
   hudl_pass: '',
+  team_name: '',
   error: null,
 };
 
@@ -33,8 +34,8 @@ function NewClient(props) {
   const [state, setState] = useState(INITIAL_STATE)
 
   const create = () => {
-    let {email, password, name, phone, hudl_email, hudl_pass} = state
-    socket_get(URLs.PY_NEW_CLIENT, email, password, name, phone, hudl_email, hudl_pass)
+    let {email, password, name, phone, hudl_email, hudl_pass, team_name} = state
+    socket_get(URLs.PY_NEW_CLIENT, email, password, name, phone, hudl_email, hudl_pass, team_name)
       .then(({data}) => {
           console.log('User Record created. \n')
           console.log(data)
@@ -51,9 +52,9 @@ function NewClient(props) {
     setState({...state, [event.target.name]: event.target.value });
   }
 
-  const { email, password, phone, name, hudl_email, hudl_pass, error } = state;
+  const { email, password, phone, name, hudl_email, hudl_pass, team_name, error } = state;
  
-  const isInvalid = !allGood([email, password, phone, name]);
+  const isInvalid = !allGood([email, password, phone, name, team_name]);
 
   return (
     <div>
@@ -63,6 +64,14 @@ function NewClient(props) {
         onChange={onChange}
         type="text"
         placeholder="Name"
+      />
+      <br/>
+      <input
+        name="team_name"
+        value={team_name}
+        onChange={onChange}
+        type="text"
+        placeholder="Team Name"
       />
       <br/>
       <input

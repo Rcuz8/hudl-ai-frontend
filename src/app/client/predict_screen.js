@@ -330,7 +330,9 @@ export default function Predict_screen(props) {
     // Compile input
     const input = compile_input(withForm);
     // Should pass compliance assertion
-    const inputShape = model.inputLayers[0].batchInputShape[1];
+    const inputShape = model.inputLayers.length > 0 ? 
+      model.inputLayers[0].batchInputShape[1]
+      : model.layers[0].batchInputShape[1];
     if (input.length !== inputShape) {
       console.log(model);
       let msg =

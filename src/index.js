@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
- import { URLs, socket_get, TEST_MODE } from './helpers/constants'
+ import { URLs, socket_get, TEST_MODE , TEST_MODE_ISADMIN} from './helpers/constants'
 import './index.css';
 import './app/internal/App.css'
 import Axios from 'axios'
 import Router from './router';
 import Firebase from './helpers/fb/setup'
+import SocketIOTest from './st'
 const firebase = new Firebase()
 
 const Index = (props) => {
@@ -19,13 +20,12 @@ const Index = (props) => {
       if (authUser === user) return // no change
       setUser(authUser)
       try {
-        let par = {params:{uid:authUser.uid}}
         if (TEST_MODE) {
-          setAdmin(true)
-
+          setAdmin(TEST_MODE_ISADMIN)
         } else {
-          socket_get(URLs.PY_USERINFO,par).then((res) => {
-            setAdmin(res.data['isAdmin'] === true)
+          socket_get(URLs.PY_USERINFO,authUser.uid).then((res) => {
+            const adm = res['isAdmin'] === true
+            setAdmin(adm)
           })
         }
         

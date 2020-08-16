@@ -15,9 +15,6 @@ export default withRouter(function Landing(props) {
   var fb = props.firebase;
   var adm = props.isAdmin;
 
-  user = null;
-  adm = false;
-
   let refs = [useRef(null), useRef(null), useRef(null)]
 
   return (
@@ -26,7 +23,7 @@ export default withRouter(function Landing(props) {
         <div class="ld-cutout"></div>
         <div class="ld-content-wrap">
           <div class="ld-content">
-            <Navigation refs={refs} />
+            <Navigation user={user} refs={refs} />
             <div class="ld-jumbotron">
               <h1>
                 Power your Game. <br />{" "}

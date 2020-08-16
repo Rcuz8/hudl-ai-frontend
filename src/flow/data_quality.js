@@ -95,7 +95,7 @@ const Component = React.memo((props) => {
       setGames(film_qualities);
       setFilms(extract_films(film_qualities));
     } else {
-      games_get(TEST_CLIENT_ID || props.user.uid)
+      games_get(props.user.uid)
     .then((resp) => {
       if (resp.data == null)
         return

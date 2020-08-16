@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { withRouter } from "react-router-dom";
-import { URLs, socket_get, games_get } from "../helpers/constants";
+import { URLs, socket_get, games_get, socket_setup } from "../helpers/constants";
 import styles from './styles/nga.module.css'
 import {ProgressBar} from 'react-bootstrap'
 import axios from "axios";
@@ -24,7 +24,7 @@ function NMP(props) {
         setClients(result);
       }
     });
-  });
+  }, [setClients]);
 
 
   const selected_client = async (client) => {
@@ -71,23 +71,26 @@ function NMP(props) {
   }) : null
 
   const submit = () => {
+    console.log('Submission requested.')
     setProgress(0)
-    socket_get(URLs.PY_NEW_MODEL, curr_game.id, eval_film)
-    .then(({pct, msg}) => {
+    const socket_cb = (response, socket) => {
+      const {pct, msg} = response
       console.log('Received progress: (', pct, '% )', '=', msg)
       setProgress(pct)
       setProgressMsg(msg)
-      if (pct == 100) {
+      if (pct === 100) {
+        console.log('Should be finishing mod creation.')
+        socket.close()
         alert('Done.\n\n\tGenerated Models.')
         return
-      }        
-    })
-    .catch((response) => alert('Error: ' + response.toString()))
+      }    
+    }
+    socket_setup(URLs.PY_NEW_MODEL, 'model_status', socket_cb, curr_game.id, eval_film)
   }
 
   return (
     <div>
-      <h1>New Game Analysis</h1>
+      <h1>Create AI Model</h1>
       <br />
       <h2>Select a Client</h2>
       <table class={styles.itemlist}>

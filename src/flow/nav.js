@@ -42,10 +42,11 @@ const NavigationAuth = (props) => (
 );
  
 
-export const NavigationSplash = ({refs}) => (
+export const NavigationSplash = ({user, refs}) => (
   <ul class={styles.navbar + ' ' + styles.nv_hover} style={{color: 'white', backgroundColor: 'transparent'}}>
     <li><NavLink to={ROUTES.HOME}>     <span style={{display: 'flex', marginTop: '5px', color: 'white'}}><h3>{CompanyName}</h3><p class={styles.btag}> ALPHA</p>   </span>                          </NavLink></li>
-    <li class={styles.toright}><NavLink class='navhov' activeStyle={active_item} to={ROUTES.SIGN_IN}>             Sign In                  </NavLink></li>
+    {!user && <li class={styles.toright}><NavLink class='navhov' activeStyle={active_item} to={ROUTES.SIGN_IN}>             Sign In                  </NavLink></li>}
+    {user && <li class={styles.toright}><NavLink class='navhov' activeStyle={active_item} to={ROUTES.SIGN_IN}>             Home                  </NavLink></li>}
     <li class={styles.toright} onClick={() => scrollToRef(refs[2])}>Contact</li>
     <li class={styles.toright} onClick={() => scrollToRef(refs[1])}>Products &#38; Services</li>
     <li class={styles.toright} onClick={() => scrollToRef(refs[0])}>About Us</li>

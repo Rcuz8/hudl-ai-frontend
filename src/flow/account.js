@@ -15,7 +15,7 @@ function Account(props) {
       setusername("TEST USER NAMEEEEEEEE NAMEEEEEEEEEEE");
     } else {
       con.socket_get(con.URLs.PY_USERINFO, UID).then((res) => {
-        const db_profile = res.data;
+        const db_profile = res;
 
         setusername(db_profile["name"]);
         setteamname(db_profile["team_name"]);
@@ -48,7 +48,11 @@ function Account(props) {
           </div>
           <br />
           <br />
-          <button class="stdbtn" onClick={() => props.db.doSignOut()}>
+          <button class="stdbtn" onClick={() => {
+            props.history.push(con.ROUTES.HOME);
+            props.firebase.doSignOut()
+          }
+            }>
             Sign Out
           </button>
         </div>

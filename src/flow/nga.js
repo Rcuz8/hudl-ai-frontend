@@ -26,7 +26,21 @@ const NGA = React.memo((props) => {
     const auth_and_get_directory = async (email, password) => {
         setLoginStatus(0);
         // Login & get data
-        const ws = new WebSocket('ws://' + URLs.NODE_LOGIN);
+        let ws;
+        try {
+          ws = new WebSocket('ws://' + URLs.NODE_LOGIN);
+        } catch (err) {
+          alert('Could not establish WebSocket connection. Details in logger.')
+          console.log('Failed WS Connection Details:')
+          console.log('URL: ', 'ws://' + URLs.NODE_LOGIN)
+          console.log('Error: ', err.message)
+        }
+        ws.onerror = function(err) {
+            alert('Websocket Error. Details in logger. \nNOTE: If this is on LOGIN, node server is down')
+            console.log('Failed WS Connection Details:')
+            console.log('URL: ', 'ws://' + URLs.NODE_LOGIN)
+            console.log('Error: ', err)
+        }; 
         ws.onopen = function() {
             console.log('WebSocket Client Connected : login');
             ws.send(JSON.stringify({email: email, password: password}));
@@ -113,6 +127,7 @@ const NGA = React.memo((props) => {
     
   useEffect(() => {
     socket_get(URLs.PY_CLIENTS).then(cli => {
+      console.log('Got clients.')
       let result = cli.data
       if (result.toString() !== clients.toString()) {
         setClients(result)
@@ -122,7 +137,7 @@ const NGA = React.memo((props) => {
         
     })
   
-  })
+  } , [setClients])
 
   
   const selected_client = async (client) => {
