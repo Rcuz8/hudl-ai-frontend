@@ -259,7 +259,7 @@ export default function Predict_screen(props) {
         setGames(response["data"]);
       });
     }
-  }, [setGames, uid]);
+  }, [setGames, uid]); 
 
   const compile_input = (withForm = null) => {
     if (!state.dicts.hash) {
