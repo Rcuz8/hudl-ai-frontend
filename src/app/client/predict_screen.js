@@ -281,15 +281,22 @@ export default function Predict_screen(props) {
           state.dicts.off_form.indexOf(withForm) + 1,
           state.dicts.off_form.length
         );
-    let d2e = ttl_dst(ydln, ourSide);
-    let scorediff = scoreUs - scoreThem;
+
+    /* Grab & Scale the numeric fields */
+
+    let d2e = ttl_dst(ydln, ourSide) /* Then scale the input */ / 100; // 25 seems about the max
+    let scorediff = (scoreUs - scoreThem) /* Then scale the input */ / 35;
+    let dn_scaled = dn / 4;
+    let dst_scaled = dist / 25;
+    let qtr_scaled = qtr / 4;
+
     console.log("Compiling configuration.");
     console.log(
       "Down: ",
-      dn,
+      dn_scaled,
       "\n",
       "Dist: ",
-      dist,
+      dst_scaled,
       "\n",
       "D2E : ",
       d2e,
@@ -301,7 +308,7 @@ export default function Predict_screen(props) {
       mdf_ppt,
       "\n",
       "QTR : ",
-      qtr,
+      qtr_scaled,
       "\n",
       "ScDf: ",
       scorediff,
@@ -312,14 +319,14 @@ export default function Predict_screen(props) {
     );
 
     const args = !withForm
-      ? keras.compileargs(dn, dist, d2e, mdf_hash, mdf_ppt, qtr, scorediff)
+      ? keras.compileargs(dn_scaled, dst_scaled, d2e, mdf_hash, mdf_ppt, qtr_scaled, scorediff)
       : keras.compileargs(
-          dn,
-          dist,
+          dn_scaled,
+          dst_scaled,
           d2e,
           mdf_hash,
           mdf_ppt,
-          qtr,
+          qtr_scaled,
           scorediff,
           mdf_form
         );

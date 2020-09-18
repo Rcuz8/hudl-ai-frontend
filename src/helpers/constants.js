@@ -2,7 +2,7 @@ import React from "react";
 import io from "socket.io-client";
 
 const LOCAL_NODE_SERVER = "localhost:9797";
-const LOCAL_PY_SERVER = "http://127.0.0.1:8080"; // NOTE: SSL IN PROD MEANS HTTP -> HTTPS
+const LOCAL_PY_SERVER = "http://0.0.0.0:8080"; // NOTE: SSL IN PROD MEANS HTTP -> HTTPS
 
 export const TEST_MODE = false;
 export const TEST_MODE_ISADMIN = false;
@@ -108,7 +108,10 @@ export async function socket_listen(response_title, callback_fn) {
 
 export async function games_get(...args) {
   return new Promise((res, rej) => {
-    const socket = io(PY_SERVER);
+    const socket = io(PY_SERVER, {
+      reconnectionAttempts: 3,
+    });
+    
     socket.on("connect", () => {
       socket.emit(URLs.PY_GAMES, ...args);
     });
