@@ -4,10 +4,14 @@ import io from "socket.io-client";
 const LOCAL_NODE_SERVER = "localhost:9797";
 const LOCAL_PY_SERVER = "http://0.0.0.0:8080"; // NOTE: SSL IN PROD MEANS HTTP -> HTTPS
 
+const PROD_PORT = 10153;
+const PROD_PY_SERVER = "https://hudpred.herokuapp.com/";
+const PROD_NODE_SERVER = "https://hudpred-parser.herokuapp.com:10153";
+
 export const TEST_MODE = false;
 export const TEST_MODE_ISADMIN = false;
 
-export const CompanyName = "The Company";
+export const CompanyName = "Play by Plai";
 
 export const TKN_1 = ",";
 export const TKN_2 = "\n";
@@ -27,9 +31,23 @@ const LOCAL_URLs = {
   PY_NEW_MODEL: "svr_gen_model",
 };
 
-export const PY_SERVER = LOCAL_PY_SERVER;
+const PROD_URLs = {
+  NODE_LOGIN: PROD_NODE_SERVER + "/login",
+  NODE_FILMDATA: PROD_NODE_SERVER + "/filmdata",
+  NODE_VIDOPTIONS: PROD_NODE_SERVER + "/videooptions",
+  NODE_MULTIDATA: PROD_NODE_SERVER + "/multidata",
+  PY_USERINFO: "svr_user_info",
+  PY_NEW_CLIENT: "svr_new_client",
+  PY_CLIENTS: "svr_clients",
+  PY_GAMES: "svr_games",
+  PY_NEW_QUALITY_ANALYSIS: "svr_perform_qa",
+  PY_NEW_MODEL: "svr_gen_model",
+  PY_NEW_MODEL: "svr_gen_model",
+};
 
-export const URLs = LOCAL_URLs;
+export const PY_SERVER = TEST_MODE ? LOCAL_PY_SERVER : PROD_PY_SERVER;
+
+export const URLs = TEST_MODE ? LOCAL_URLs : PROD_URLs;
 
 export const ROUTES = {
   LANDING: "/",
@@ -111,7 +129,7 @@ export async function games_get(...args) {
     const socket = io(PY_SERVER, {
       reconnectionAttempts: 3,
     });
-    
+
     socket.on("connect", () => {
       socket.emit(URLs.PY_GAMES, ...args);
     });
