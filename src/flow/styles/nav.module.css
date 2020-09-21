@@ -25,6 +25,12 @@
   cursor: pointer;
 }
 
+.offcolor {
+    color: var(--color4);
+    margin: 0 0 0 -5px;
+    padding: 0;
+}
+
 
 
 
@@ -69,7 +75,7 @@
 
 .nv_hover > li {
   padding: 0px 7px;
-  
+
 }
 
 .nv_hover > li a {

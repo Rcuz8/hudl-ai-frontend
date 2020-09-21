@@ -10,6 +10,9 @@ import MovieIcon from '@material-ui/icons/Movie';
 import RedditIcon from '@material-ui/icons/Reddit';
 import SportsEsportsIcon from '@material-ui/icons/SportsEsports';
 
+
+const CompanyNameSplit = [CompanyName.substring(0, CompanyName.length -2), CompanyName.substring(CompanyName.length - 2, CompanyName.length)]
+const CompanyNameComponent = <h3>{CompanyNameSplit[0]} <span class={styles.offcolor}>({CompanyNameSplit[1]})</span></h3>;
 const Navigation = ({ authUser, isAdmin, firebase }) => (
   <div>{authUser ? <NavigationAuth isAdmin={isAdmin} db={firebase}/> : null}</div>
 );
@@ -20,9 +23,9 @@ const active_item = {
   backgroundColor: 'black',
 }
 const NavigationAuth = (props) => (
-  props.isAdmin ? 
+  props.isAdmin ?
   <ul class={styles.navbar} >
-    <li><NavLink to={ROUTES.HOME}>     <span style={{display: 'flex', marginTop: '5px'}}><h3>{CompanyName}</h3><p class={styles.btag}> ALPHA</p>   </span>                          </NavLink></li>
+    <li><NavLink to={ROUTES.HOME}>     <span style={{display: 'flex', marginTop: '5px'}}>{CompanyNameComponent}<p class={styles.btag}> ALPHA</p>   </span>                          </NavLink></li>
     <li ><NavLink exact activeStyle={active_item} to={ROUTES.SIGN_IN}>       Sign In                 </NavLink></li>
     <li ><NavLink exact activeStyle={active_item} to={ROUTES.LANDING}>       Landing                 </NavLink></li>
     <li class={styles.toright}><NavLink activeStyle={active_item} to={ROUTES.ACCOUNT}>             <AccountCircleIcon/>                  </NavLink></li>
@@ -34,17 +37,17 @@ const NavigationAuth = (props) => (
   </ul>
   :
   <ul class={styles.navbar}>
-    <li><NavLink to={ROUTES.HOME}>     <span style={{display: 'flex', marginTop: '5px'}}><h3>{CompanyName}</h3><p class={styles.btag}> ALPHA</p>   </span>                          </NavLink></li>
+    <li><NavLink to={ROUTES.HOME}>     <span style={{display: 'flex', marginTop: '5px'}}>{CompanyNameComponent}<p class={styles.btag}> ALPHA</p>   </span>                          </NavLink></li>
     <li class={styles.toright}><NavLink activeStyle={active_item} to={ROUTES.ACCOUNT}>             <AccountCircleIcon/>                  </NavLink></li>
     <li class={styles.toright}><NavLink activeStyle={active_item} to={ROUTES.DATA_QUALITY}>        <StorageIcon/>              </NavLink></li>
     <li class={styles.toright}><NavLink activeStyle={active_item} to={ROUTES.PREDICT}>             <SportsEsportsIcon/>    </NavLink></li>
   </ul>
 );
- 
+
 
 export const NavigationSplash = ({user, refs}) => (
   <ul class={styles.navbar + ' ' + styles.nv_hover} style={{color: 'white', backgroundColor: 'transparent'}}>
-    <li><NavLink to={ROUTES.HOME}>     <span style={{display: 'flex', marginTop: '5px', color: 'white'}}><h3>{CompanyName}</h3><p class={styles.btag}> ALPHA</p>   </span>                          </NavLink></li>
+    <li><NavLink to={ROUTES.HOME}>     <span style={{display: 'flex', marginTop: '5px', color: 'white'}}>{CompanyNameComponent}<p class={styles.btag}> ALPHA</p>   </span>                          </NavLink></li>
     {!user && <li class={styles.toright}><NavLink class='navhov' activeStyle={active_item} to={ROUTES.SIGN_IN}>             Sign In                  </NavLink></li>}
     {user && <li class={styles.toright}><NavLink class='navhov' activeStyle={active_item} to={ROUTES.SIGN_IN}>             Home                  </NavLink></li>}
     <li class={styles.toright} onClick={() => scrollToRef(refs[2])}>Contact</li>
@@ -55,11 +58,16 @@ export const NavigationSplash = ({user, refs}) => (
 
 export const NavigationSignin = () => (
   <ul class={styles.navbar}>
-    <li><NavLink to={ROUTES.HOME}>     <span style={{display: 'flex', marginTop: '5px'}}><h3>{CompanyName}</h3><p class={styles.btag}> ALPHA</p>   </span>                          </NavLink></li>
+    <li><NavLink to={ROUTES.HOME}>
+        <span style={{display: 'flex', marginTop: '5px'}}>
+            {CompanyNameComponent}
+            <p class={styles.btag}> ALPHA</p>
+        </span>
+        </NavLink></li>
   </ul>
 );
 
-const scrollToRef = (ref) => window.scrollTo({top: ref.current.offsetTop, behavior: 'smooth'})   
+const scrollToRef = (ref) => window.scrollTo({top: ref.current.offsetTop, behavior: 'smooth'})
 
- 
+
 export default withRouter(Navigation);
