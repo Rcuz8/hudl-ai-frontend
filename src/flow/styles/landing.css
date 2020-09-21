@@ -19,6 +19,8 @@ background: linear-gradient(270deg, rgba(34,75,141,1) 0%, var(--color1) 100%);
   
 }
 
+
+
 .cutout {
   /* other styles */
   overflow:hidden;
@@ -33,6 +35,14 @@ background: linear-gradient(270deg, rgba(34,75,141,1) 0%, var(--color1) 100%);
   width: 100%;
   z-index: 2;
 }
+
+@media only screen and (max-width: 768px) {
+  .ld-content-wrap {
+    padding: 20px;
+  }
+}
+
+
 
 .ld-content {
   position: static;
@@ -58,6 +68,21 @@ background: linear-gradient(270deg, rgba(34,75,141,1) 0%, var(--color1) 100%);
   width: 70%;
   margin: auto;
   max-width: 800px;
+}
+
+  /* For mobile phones: */
+@media only screen and (max-width: 768px) {
+  .ld-jumbotron {
+    padding: 20px;
+    padding-top: 30px;
+  }
+  .ld-jumbotron h1 {
+    font-size: 40px;
+  }
+  .ld-jumbotron p, .ld-core > p {
+    font-size: large;
+    width: 80%;
+  }
 }
 
 .ld-hr {
@@ -96,6 +121,23 @@ background: linear-gradient(270deg, rgba(34,75,141,1) 0%, var(--color1) 100%);
   width: 500px;
 }
 
+@media only screen and (max-width: 768px) {
+  .ld-core img {
+    width: 200px;
+  }
+
+  .ld-ps-hr {
+    width: 200px;
+  }
+  .ld-cutout {
+    margin-top: -200px;
+    width:100px;
+    height:400px;
+    
+  }
+}
+
+
 .ld-split {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -103,6 +145,16 @@ background: linear-gradient(270deg, rgba(34,75,141,1) 0%, var(--color1) 100%);
   gap: 20px;
   padding: 60px 30px;
 }
+
+@media only screen and (max-width: 768px) {
+  .ld-split {
+    grid-template-columns: repeat(1, 1fr);
+    gap: 20px;
+    padding: 30px 20px;
+  }
+}
+
+
 
 .ld-split > * > * {
   max-width: 300px;
@@ -144,6 +196,8 @@ background: linear-gradient(270deg, rgba(34,75,141,1) 0%, var(--color1) 100%);
   padding-left: 0px;
 }
 
+
+
 .ld-services * {
   text-align: left;
 }
@@ -176,6 +230,21 @@ background: linear-gradient(270deg, rgba(34,75,141,1) 0%, var(--color1) 100%);
   margin-right: 0.5rem;
 }
 
+@media only screen and (max-width: 768px) {
+  .ld-services {
+    margin: 10px;
+    width: 90%;
+    border-radius: 5px;
+    box-shadow: 6px 6px 6px rgb(0, 0, 0,50%);
+    padding:10px 1px;
+    padding-left: 0px;
+  }
+
+  .ld-services ul li {
+    font-size: small;
+  }
+}
+
 .ld-contact {
   width: 80%;
   display: grid;
@@ -187,5 +256,14 @@ background: linear-gradient(270deg, rgba(34,75,141,1) 0%, var(--color1) 100%);
   margin: 0px 20px;
 }
 
+@media only screen and (max-width: 768px) {
+  .ld-contact {
+    width: 80%;
+    display: grid;
+    grid-template-columns: 1fr;
+    margin: 20px auto;
+    max-width: 300px;
+  }
+}
 
 

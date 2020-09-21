@@ -92,3 +92,16 @@
 .nv_hover > li:nth-child(1), .nv_hover > li:nth-child(2) {
   background-color: transparent;
 }
+
+@media only screen and (max-width: 768px) {
+  .companyname {
+    font-size: large;
+  }
+
+  .btag {
+    font-size: 7px;
+    padding: 2px 4px;
+    line-height: 7px;
+    height: 13px;
+  }
+}

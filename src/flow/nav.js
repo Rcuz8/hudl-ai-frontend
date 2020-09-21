@@ -12,7 +12,7 @@ import SportsEsportsIcon from '@material-ui/icons/SportsEsports';
 
 
 const CompanyNameSplit = [CompanyName.substring(0, CompanyName.length -2), CompanyName.substring(CompanyName.length - 2, CompanyName.length)]
-const CompanyNameComponent = <h3>{CompanyNameSplit[0]} <span class={styles.offcolor}>({CompanyNameSplit[1]})</span></h3>;
+const CompanyNameComponent = <h3 class={styles.companyname}>{CompanyNameSplit[0]} <span class={styles.offcolor}>({CompanyNameSplit[1]})</span></h3>;
 const Navigation = ({ authUser, isAdmin, firebase }) => (
   <div>{authUser ? <NavigationAuth isAdmin={isAdmin} db={firebase}/> : null}</div>
 );
