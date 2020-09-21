@@ -135,6 +135,7 @@ function ViewData(props) {
     }
 
     const generateModel = async () => {
+        console.log('Generating Model.')
         set_ShowBuilding(true);
         let output_indices = outputList.map((item) => headers.indexOf(item));
         //TODO: MAKE REQUEST
