@@ -16,6 +16,7 @@
     "material-design-icons": "^3.0.1",
     "material-ui-icons": "^1.0.0-beta.36",
     "pandas-js": "^0.2.4",
+    "particles-bg": "^2.5.0",
     "react": "^16.13.1",
     "react-bootstrap": "^1.0.1",
     "react-circular-progressbar": "^2.0.3",

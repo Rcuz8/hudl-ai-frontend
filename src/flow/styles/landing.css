@@ -15,8 +15,7 @@ background: linear-gradient(270deg, rgba(34,75,141,1) 0%, var(--color1) 100%);
   width:400px;
   height:800px;
   transform:rotate(55deg);
-  background-color:white; /* to see where it is */
-  
+  background-color:var(--color3); /* to see where it is */
 } 
 
 
@@ -46,18 +45,32 @@ background: linear-gradient(270deg, rgba(34,75,141,1) 0%, var(--color1) 100%);
 
 .ld-content {
   position: static;
-  background-color: var(--color5);
+  background-color: white;
+
+  background: url("http://api.thumbr.it/whitenoise-361x370.png?");
   box-shadow: 5px 5px 5px rgb(0,0,0,50%);
   max-width: 1500px;
   margin: auto;
+  animation: 1.3s pop;
 }
 
 /* JUMBOTRON */
 
 .ld-jumbotron {
-  color: white;
+  color: var(--color5);
   padding: 50px;
   padding-top: 200px;
+}
+
+
+
+@keyframes pop {
+  0% {
+    transform: scale(0, 0);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
 }
 
 .ld-jumbotron h1 {
@@ -111,6 +124,8 @@ background: linear-gradient(270deg, rgba(34,75,141,1) 0%, var(--color1) 100%);
 
 .ld-core > * {
   margin: 20px;
+  animation: 1.3s pop;
+
 }
 
 
@@ -246,15 +261,26 @@ background: linear-gradient(270deg, rgba(34,75,141,1) 0%, var(--color1) 100%);
 }
 
 .ld-contact {
-  width: 80%;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  display: flex;
   margin: 40px auto;
-  max-width: 800px;
 }
 .ld-contact > * {
   margin: 0px 20px;
 }
+.ld-contact > * {
+  color: white;
+}
+.ld-contact > *:hover {
+  transition: font-size 1s;
+}
+
+.ld-contact > * > *:hover {
+  cursor: pointer;
+  font-size: 30px;
+  transition: font-size 1s;
+  color: white;
+}
+
 
 @media only screen and (max-width: 768px) {
   .ld-contact {

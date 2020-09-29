@@ -4,11 +4,15 @@ import {NavigationSplash as Navigation} from "./nav";
 import "./styles/landing.css";
 import AccessTimeIcon from "@material-ui/icons/AccessTime";
 import BuildIcon from "@material-ui/icons/Build";
+import EmailIcon from "@material-ui/icons/Email";
+import PhoneIcon from "@material-ui/icons/Phone";
 import TimelineIcon from "@material-ui/icons/Timeline";
 import Engine from "../img/multi_models.png";
 import Flow from "../img/app_flow.jpg";
 import DQ from "../img/data_quality.png";
 import { Tabs, Tab } from "react-bootstrap";
+import ParticlesBg from 'particles-bg'
+
 
 export default withRouter(function Landing(props) {
   var user = props.user;
@@ -20,11 +24,18 @@ export default withRouter(function Landing(props) {
   return (
     <div>
       <div class="ld-container">
+
         <div class="ld-cutout"></div>
         <div class="ld-content-wrap">
+        <ParticlesBg type="circle" bg={true} />
+
           <div class="ld-content">
+
             <Navigation user={user} refs={refs} />
+
             <div class="ld-jumbotron">
+            
+
               <h1>
                 Power your Game. <br />{" "}
                 <span style={{ fontWeight: "bold" }}>With AI.</span>
@@ -152,8 +163,8 @@ export default withRouter(function Landing(props) {
               <h3  ref={refs[2]}>Contact</h3>
               <div class='ld-contact'>
               <p>Ryan Cocuzzo</p>
-              <p>RyanCocuzzo@gmail.com</p>
-              <p>(908) 642 - 1391</p>
+              <a href="mailto:ryan.cocuzzo@gmail.com"><EmailIcon /></a>
+              <a href="tel:9086421391"><PhoneIcon /></a>
               </div>
               
             </div>

@@ -19,7 +19,7 @@ const Navigation = ({ authUser, isAdmin, firebase }) => (
 
 const active_item = {
   fontWeight: "bold",
-  color: "white",
+  color: "var(--color5)",
   backgroundColor: 'black',
 }
 const NavigationAuth = (props) => (
@@ -46,8 +46,8 @@ const NavigationAuth = (props) => (
 
 
 export const NavigationSplash = ({user, refs}) => (
-  <ul class={styles.navbar + ' ' + styles.nv_hover} style={{color: 'white', backgroundColor: 'transparent'}}>
-    <li><NavLink to={ROUTES.HOME}>     <span style={{display: 'flex', marginTop: '5px', color: 'white'}}>{CompanyNameComponent}<p class={styles.btag}> ALPHA</p>   </span>                          </NavLink></li>
+  <ul class={styles.navbar + ' ' + styles.nv_hover} style={{color: 'var(--color5)', backgroundColor: 'transparent'}}>
+    <li><NavLink to={ROUTES.HOME}>     <span style={{display: 'flex', marginTop: '5px', color: 'var(--color1)'}}>{CompanyNameComponent}<p class={styles.btag}> ALPHA</p>   </span>                          </NavLink></li>
     {!user && <li class={styles.toright}><NavLink class='navhov' activeStyle={active_item} to={ROUTES.SIGN_IN}>             Sign In                  </NavLink></li>}
     {user && <li class={styles.toright}><NavLink class='navhov' activeStyle={active_item} to={ROUTES.SIGN_IN}>             Home                  </NavLink></li>}
     <li class={styles.toright} onClick={() => scrollToRef(refs[2])}>Contact</li>
