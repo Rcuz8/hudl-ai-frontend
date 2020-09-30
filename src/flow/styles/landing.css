@@ -265,10 +265,11 @@ background: linear-gradient(270deg, rgba(34,75,141,1) 0%, var(--color1) 100%);
   margin: 40px auto;
 }
 .ld-contact > * {
-  margin: 0px 20px;
+  margin: 10px 20px;
 }
 .ld-contact > * {
   color: white;
+  font-size: 25px;
 }
 .ld-contact > *:hover {
   transition: font-size 1s;
@@ -280,6 +281,7 @@ background: linear-gradient(270deg, rgba(34,75,141,1) 0%, var(--color1) 100%);
   transition: font-size 1s;
   color: white;
 }
+
 
 
 @media only screen and (max-width: 768px) {

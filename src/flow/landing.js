@@ -163,8 +163,8 @@ export default withRouter(function Landing(props) {
               <h3  ref={refs[2]}>Contact</h3>
               <div class='ld-contact'>
               <p>Ryan Cocuzzo</p>
-              <a href="mailto:ryan.cocuzzo@gmail.com"><EmailIcon /></a>
-              <a href="tel:9086421391"><PhoneIcon /></a>
+              <a href="tel:9086421391"><PhoneIcon fontSize="large" /></a>
+              <a href="mailto:ryan.cocuzzo@gmail.com"><EmailIcon fontSize="large" /></a>
               </div>
               
             </div>
