@@ -4,11 +4,10 @@ import io from "socket.io-client";
 const LOCAL_NODE_SERVER = "localhost:9797";
 const LOCAL_PY_SERVER = "http://0.0.0.0:8080"; // NOTE: SSL IN PROD MEANS HTTP -> HTTPS
 
-const PROD_PORT = 10153;
 const PROD_PY_SERVER = "https://hudpred.herokuapp.com/";
 const PROD_NODE_SERVER = "https://hudpred-parser.herokuapp.com";
 
-export const TEST_MODE = true;
+export const TEST_MODE = false;
 export const TEST_MODE_ISADMIN = false;
 
 export const CompanyName = "Play by Plai";
