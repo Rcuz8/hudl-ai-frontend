@@ -1,17 +1,25 @@
 import React from "react";
-import "./nn.css";
 import LineTo from "react-lineto";
+import "./nn.css";
 
+/**
+ * Neural Network Node component
+ * @param {*} node Neural Network node
+ * @param {int} layerIndex layer index
+ * @param {int} nodeIndex node index
+ * @returns the component
+ */
 function NodeComp(node, layerIndex, nodeIndex) {
-  // console.log(node);
-  let from = "node id" + layerIndex + "_" + nodeIndex;
+  // create edge root
+  const from = "node id" + layerIndex + "_" + nodeIndex;
   return (
     <div class={from}>
       {node.value.toFixed(2)}
       {layerIndex > 0
-        ? node.prevLayer.nodes.map((n, otherNodeIndex) => {
-            let to = "node id" + (layerIndex - 1) + "_" + otherNodeIndex;
-            console.log("New Line \n\tfrom: " + from + "\n\tto: " + to);
+        ? node.prevLayer.nodes.map((_n, otherNodeIndex) => {
+            // create edge destination
+            const to = "node id" + (layerIndex - 1) + "_" + otherNodeIndex;
+            // create edge
             return (
               <LineTo
                 key={otherNodeIndex}
@@ -27,8 +35,14 @@ function NodeComp(node, layerIndex, nodeIndex) {
   );
 }
 
+/**
+ * The layer component for the neural network
+ * @param {object} layer the network layer
+ * @param {int} index node index
+ * @returns {Component} the layer component
+ */
 function LayerComp(layer, index) {
-  // console.log('Layer');
+  // build a component for each layer node
   return (
     <div class="layer">
       {layer.nodes.map((node, j) => (
@@ -38,20 +52,23 @@ function LayerComp(layer, index) {
   );
 }
 
+/**
+ * Neural Network component
+ *
+ * @export
+ * @param {Object} network
+ * @return {Component} the network component
+ */
 export function NNComp(network) {
-  // console.log(network.layers.length)
-  let layersComponent = network.layers.map((layer, i) => {
-    // console.log('got layer')
-    let x = LayerComp(layer, i);
-    return x;
-  });
-  // network.layers.map((layer, i) => console.log(i))
+  // Create layers components
+  let layersComponent = network.layers.map((layer, i) => LayerComp(layer, i));
 
+  // stack the layers horizontally
   return (
     <div
       class="nn"
       style={{
-        gridTemplateColumns: "repeat(" + network.layers.length + ",1fr)"
+        gridTemplateColumns: "repeat(" + network.layers.length + ",1fr)",
       }}
     >
       {layersComponent}
@@ -59,14 +76,26 @@ export function NNComp(network) {
   );
 }
 
+/**
+ * Node class
+ */
 class Node {
+  /**
+   * Create an instance of Node
+   * @param {Layer} prevLayer the previous layer
+   * @param {List} inputs the incoming nodes
+   */
   constructor(prevLayer, inputs) {
-    let isInput = prevLayer === null;
+    // Determine if it's an input node
+    const isInput = prevLayer === null;
     if (isInput) {
-      this.inputs = [{ weight: inputs[0], node: null }];
+      // accept just the input value
+      this.inputs = [{ weight: 1, node: null }];
       this.value = inputs[0];
     } else {
+      // the bias is the first input
       this.bias = inputs[0];
+      // setup the other inputs
       this.inputs = inputs.splice(1).map((input, i) => {
         return { weight: input, node: prevLayer.nodes[i] };
       });
@@ -75,50 +104,75 @@ class Node {
     this.isInput = isInput;
     this.prevLayer = prevLayer;
   }
+  /**
+   * @returns the node result value
+   */
   evaluate() {
+    // return just the bias for an input node
     if (this.isInput) return this.inputs[0];
+    // inner product (nodes, weights)
     var sum = 0;
-    // console.log('evaluating ' + JSON.stringify(this.inputs))
-    this.inputs.forEach(element => {
+    this.inputs.forEach((element) => {
+      // if, for some reason, there is no node, treat as input
       if (!element.node) {
         sum += element.weight;
       } else {
         sum += element.node.value * element.weight;
       }
     });
+    // add the bias weight
     sum += this.bias;
+    // put through threshold function
     this.value = this.threshold(sum);
+    return this.value;
   }
+  /**
+   * @param {float} z
+   * @returns the sigmoid implementation of the threshold fn
+   */
   threshold(z) {
     return 1 / (1 + Math.pow(Math.E, -z));
   }
+  /** Set the description */
   setDescription(to) {
     this.description = to;
   }
+  /** Set the bias */
   setBias(to) {
     this.inputs[0] = to;
     this.value = to;
   }
 }
 
+/**
+ * Layer class for a neural network
+ */
 class Layer {
+  /**
+   * Constructs a Layer instance
+   * @param {Array} nodes the nodes to go in the layer
+   * @param {Layer} prevLayer the previous layer
+   */
   constructor(nodes = [], prevLayer = null) {
     this.nodes = nodes;
     this.prevLayer = prevLayer;
   }
+  /** Trigger all nodes to evaluate */
   evaluate() {
-    this.nodes.forEach(node => {
+    this.nodes.forEach((node) => {
       node.evaluate();
     });
   }
+  /** Determines whether its a prev layer */
   isInputLayer() {
-    return;
+    return this.prevLayer == null;
   }
 
+  /**
+   * Set inputs
+   * @param {*} example
+   */
   setInputs(example) {
-    // console.log('prev: ' + this.prevLayer)
-    // console.log('ex: ' + example)
-    // console.log('len: ' + this.nodes.length)
     if (
       !example ||
       !Array.isArray(example) ||
@@ -134,13 +188,13 @@ class Layer {
   /*
   List of nodes
   Structure: [{in1,in2,in...}, {in1,in2,..},...]
-
   */
   fromJSON(json, prevLayer) {
-    Object.keys(json).forEach(item => {
+    Object.keys(json).forEach((item) => {
+      // create note from previous layer node JSON
       let node = new Node(prevLayer, json[item]);
       node.setDescription(item);
-      // console.log('pushing node: ' + item)
+      // add node to layer
       this.nodes.push(node);
     });
     this.prevLayer = prevLayer;
@@ -148,36 +202,53 @@ class Layer {
   }
 }
 
+/**
+ * Neural network class
+ */
 export class NN {
+  /** Creates an instance of a neural network */
   constructor() {
     this.layers = [];
   }
+  /**
+   * Add a layyer
+   * @param {Layer} layer
+   */
   addLayer(layer) {
     this.layers.add(layer);
   }
+  /**
+   * Forward-propagate an input example
+   * i.e evaluate() each layer.
+   * @param {Array} example the input data
+   */
   propagate(example) {
     this.layers[0].setInputs(example);
     for (var i = 1; i < this.layers.length; i++) this.layers[i].evaluate();
   }
+  /**
+   * @returns the output results of output nodes
+   */
   outputs() {
-    this.layers.forEach(layer => {
+    this.layers.forEach((layer) => {
       layer.evaluate();
     });
-    return this.layers[this.layers.length - 1].nodes.map(node => node.value);
+    return this.layers[this.layers.length - 1].nodes.map((node) => node.value);
   }
+
+  /**
+   * Form a NN from a string representation
+   * @param {String} str string-formatted NN
+   * @returns {NN} the neural network
+   */
   fromString(str) {
     let json = JSON.parse(str);
-    console.log(json);
-    Object.keys(json).forEach(item => {
+    Object.keys(json).forEach((item) => {
       let prevlayer =
         this.layers.length > 0 ? this.layers[this.layers.length - 1] : null;
-      // console.log('building layer from: ' + JSON.stringify(json[item]))
-      // console.log('building layer with prev: ' + JSON.stringify(prevlayer))
       let layer = new Layer().fromJSON(json[item], prevlayer);
       this.layers.push(layer);
-      // console.log('Pushed Layer: ' + JSON.stringify(layer));
     });
     return this;
   }
 }
-

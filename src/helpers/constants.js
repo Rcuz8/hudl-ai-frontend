@@ -30,7 +30,6 @@ const LOCAL_URLs = {
   PY_GAMES: 'svr_games',
   PY_NEW_QUALITY_ANALYSIS: 'svr_perform_qa',
   PY_NEW_MODEL: 'svr_gen_model',
-  PY_NEW_MODEL: 'svr_gen_model',
 }
 
 const PROD_URLs = {
@@ -43,7 +42,6 @@ const PROD_URLs = {
   PY_CLIENTS: 'svr_clients',
   PY_GAMES: 'svr_games',
   PY_NEW_QUALITY_ANALYSIS: 'svr_perform_qa',
-  PY_NEW_MODEL: 'svr_gen_model',
   PY_NEW_MODEL: 'svr_gen_model',
 }
 
