@@ -1,45 +1,45 @@
 import app from 'firebase/app';
 import 'firebase/auth';
-import 'firebase/storage';
 import 'firebase/firestore';
- 
+import 'firebase/storage';
+
 const config = {
-  apiKey: "AIzaSyDKxaK0QVq7symfg5G703qj7OXlINm7MfY",
-  authDomain: "hudpred.firebaseapp.com",
-  databaseURL: "https://hudpred.firebaseio.com",
-  projectId: "hudpred",
-  storageBucket: "hudpred.appspot.com",
-  messagingSenderId: "882772259819",
-  appId: "1:882772259819:web:5e7cedd08d4f8ed6499fae",
-  measurementId: "G-76Z2YNMF8M"
+  apiKey: process.env.apiKey,
+  authDomain: process.env.authDomain,
+  databaseURL: process.env.databaseURL,
+  projectId: process.env.projectId,
+  storageBucket: process.env.storageBucket,
+  messagingSenderId: process.env.messagingSenderId,
+  appId: process.env.appId,
+  measurementId: process.env.measurementId
 };
- 
+
 class Firebase {
   constructor() {
     app.initializeApp(config);
- 
+
     this.auth = app.auth();
     this.storage = app.storage()
     this.db = app.firestore()
 
   }
- 
+
   // *** Auth API ***
- 
+
   doCreateUserWithEmailAndPassword = (email, password) =>
     this.auth.createUserWithEmailAndPassword(email, password);
- 
+
   doSignInWithEmailAndPassword = (email, password) =>
     this.auth.signInWithEmailAndPassword(email, password);
- 
+
   doSignOut = () => this.auth.signOut();
 
   doPasswordReset = email => this.auth.sendPasswordResetEmail(email);
- 
+
   doPasswordUpdate = password =>
     this.auth.currentUser.updatePassword(password);
 
 }
- 
+
 export default Firebase;
 

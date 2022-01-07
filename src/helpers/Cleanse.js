@@ -1,146 +1,165 @@
-import React from 'react';
-import { TKN_1, TKN_2, TKN_3 } from "./constants";
+import { TKN_1, TKN_2, TKN_3 } from './constants'
 
-
-function split_data (data) { return data.data.split(TKN_2); }
-
+/**
+ * Determines the columns which are non-empty in over
+ * THRESH_PCT percent of the rows.
+ * @param {Array} rows the data rows
+ * @returns A list of column indices (which have data)
+ */
 function used_data_indices(rows) {
-  // Initialize used
-  let len = rows[0].split(TKN_1).length;
-  let used = {};
-  Array(len).fill().map((x, i) => {used[i+''] = true; return null;})
-
-  rows.forEach(row => {
-    row.split(TKN_1).forEach((el, index) => {
-      if (el) used[index] = used[index] + 1;
+  // Get data width
+  let len = rows[0].split(TKN_1).length
+  let used = {}
+  // Fill a dict per each col
+  Array(len)
+    .fill()
+    .map((x, i) => {
+      used[i + ''] = true
+      return null
     })
-  });
 
-  let THRESHOLD_PERC = 70;
-
-  let indices = [];
-  Object.keys(used).map((key) => {
-    if (used[key]/rows.length >= THRESHOLD_PERC/100)
-      indices.push(key);
-    return null;
+  // for each row (tokenized), increment column store if non-empty
+  rows.forEach((row) => {
+    row.split(TKN_1).forEach((el, index) => {
+      if (el) used[index] = used[index] + 1
+    })
   })
 
-  console.log(indices)
-  
-  return indices;
+  // We want to keep columns with this percentage of the fields (i.e non-null columns).
+  let THRESHOLD_PERC = 70
+
+  let indices = []
+  // Add columns indices that have more than this percent of fields.
+  Object.keys(used).map((key) => {
+    if (used[key] / rows.length >= THRESHOLD_PERC / 100) indices.push(key)
+    return null
+  })
+
+  return indices
 }
 
+/**
+ * Trims the data width (removes specified columns)
+ * NOTE: Before calling this, rows are serialized.
+ *       After call, they are deserialized.
+ * @param {Array} rows the data rows
+ * @param {Array} used_indices the indices meeting the presence threshold
+ * @returns the data rows
+ */
 function trim_data_width(rows, used_indices) {
-  let updated_rows = rows.map(row => {
-    var trimmed_row = [];
+  // iterate through all rows trimming
+  return rows.map((row) => {
+    const trimmed_row = []
+    // determine if each column is used. If so, add to row.
     row.split(TKN_1).forEach((el, index) => {
-      if (used_indices.indexOf(index+"") !== -1) {
-        trimmed_row.push(el);
+      if (used_indices.indexOf(index + '') !== -1) {
+        trimmed_row.push(el)
       }
     })
-    return trimmed_row;
-  });
-  console.log('Updated width of ' + updated_rows.length + ' rows to ' + used_indices.length + ' wide' )
-  return updated_rows;
-}
-
-function cleaned_data(rows_lists) {
-  let clean_rows = [];
-  rows_lists.map((row) => {
-    var should_push = true;
-      row.forEach((item) => {
-        if (!item) should_push = false;
-      })
-      if (should_push)
-        clean_rows.push(row);
-      return null;
+    return trimmed_row
   })
-  console.log('Cleaned data to now contain ' + clean_rows.length + ' rows')
-  return clean_rows;
 }
 
-const trim =(str, len) => {
-  if (len <= 0) return len;
-  return str.substring(0,str.length-len);
+/**
+ * Cleans the data (filters out those with empty fields)
+ * @param {Array} rows_lists the rows
+ * @returns rows with no empty fields
+ */
+function cleaned_data(rows_lists) {
+  const clean_rows = []
+  // iterate through rows
+  rows_lists.map((row) => {
+    var should_push = true
+    row.forEach((item) => {
+      // if any column is empty, do not include this row
+      if (!item) should_push = false
+    })
+    if (should_push) clean_rows.push(row)
+    return null
+  })
+  return clean_rows
 }
 
-// export function retokenize(filmdata) {
-//   var data_str = '';
-//   filmdata.forEach((row) => {
-//     var str = '';
-//     row.forEach((item) => {str += (item + TKN_1)});
-//     data_str += (trim(str, 1) + TKN_2);
-//   })
-//   console.log(data_str);
-//   return trim(data_str, 3); // SHOULD BE TKN_2.length
-      
-// }
-
+/**
+ * Retokenize/Serialize the data
+ * @param {Array} data_matrix_list the matrix list
+ * @returns the serialized data
+ */
 export function retokenize(data_matrix_list) {
-  var data_str = '[';
+  var data_str = '['
   data_matrix_list.forEach((matrix) => {
-    var mx = '[';
+    var mx = '['
     matrix.forEach((row) => {
       mx += '"' + row.toString() + '",'
     })
-    mx = mx.substring(0,mx.length-1) // chop off extra comma
+    mx = mx.substring(0, mx.length - 1) // chop off extra comma
     mx += '],'
     data_str += mx
   })
-  data_str = data_str.substring(0,data_str.length-1) // chop off extra comma
+  data_str = data_str.substring(0, data_str.length - 1) // chop off extra comma
   data_str += ']'
 
   return data_str
 }
-/*
-  // a,b,c!!!d,e,f###a,b,c!!!d,e,f -> [[['a','b','c'], ['d','e','f']], [['a','b','c'], ['d','e','f']]]
-*/
-export const untokenize = (str) => str.split(TKN_3).map(item=>item.split(TKN_2).map(item => item.split(TKN_1)))
 
+/**
+ * Deserialize the data string, as per the custom backend serialization protocol
+ * 
+ * FORMAT: a,b,c!!!d,e,f###a,b,c!!!d,e,f -> [[['a','b','c'], ['d','e','f']], [['a','b','c'], ['d','e','f']]]
+ * 
+ * @param {String} str the tokenized data string
+ * @returns the data
+ */
+export const untokenize = (str) =>
+  str
+    .split(TKN_3)
+    .map((item) => item.split(TKN_2).map((item) => item.split(TKN_1)))
+
+/**
+ * Swaps the tokens of a tokenized string.
+ * @param {String} str data string
+ * @returns the retokenized string
+ */
 export const token_swap = (str) => str.split(TKN_2).join('\n')
 
+/**
+ * Clean the data, given the active/used columns information.
+ * @param {Array} splitdata the data (already deserialized)
+ * @param {Array} used_indices the list of indices for used columns
+ * @returns The cleaned data
+ */
 export function cleaned_withParams(splitdata, used_indices) {
-  let trimmed_data = trim_data_width(splitdata, used_indices);
-  let clean = cleaned_data(trimmed_data);
-  if (clean.length < 5 ) throw 'Cleansing error! There should be more clean data!';
-  return clean;
+  // trim the width of the data
+  let trimmed_data = trim_data_width(splitdata, used_indices)
+  // remove incomplete entries
+  let clean = cleaned_data(trimmed_data)
+  // If all data is being removed, there is an issue.
+  if (clean.length < 1)
+    throw 'Cleansing error! There should be more clean data!'
+  return clean
 }
 
+/**
+ * Cleanses the data.
+ * @param {Array} splitdata the data (already deserialized)
+ * @param {*} old_headers the list of headers pre-cleansing
+ * @returns {Object} the cleaned headers, data, and active/used column indices
+ */
 export default function cleanse(splitdata, old_headers) {
-  console.log('(2) We now have the following (split) film data : ');
-  console.log(splitdata);
-  let used_indices = used_data_indices(splitdata);
+  // Get the active/used columns. This is determined by whether they
+  // meet a pre-determined data presence threshold
+  let used_indices = used_data_indices(splitdata)
+  // Get the new columns' names. These are the new headers.
   let headers = used_indices.map((index) => old_headers[index])
-  console.log('(3) Usable headers: ')
-  console.log(headers)
-  if (!headers || headers.length < 3 ) throw 'Cleansing error! There should be more usable headers!';
-  let trimmed_data = trim_data_width(splitdata, used_indices);
-  let clean = cleaned_data(trimmed_data);
-  console.log('(4) We now have the following (clean) film data : ' + JSON.stringify(splitdata));
-  if (clean.length < 5 ) throw 'Cleansing error! There should be more clean data!';
-  return {headers: headers, data: clean, used_indices: used_indices};
+  // Ensure we did not lose all headers
+  if (!headers || headers.length < 3)
+    throw 'Cleansing error! There should be more usable headers!'
+  // Prune unused rows from data
+  let trimmed_data = trim_data_width(splitdata, used_indices)
+  // Remove rows with empty entries
+  let clean = cleaned_data(trimmed_data)
+  // Ensure we did not lose all data
+  if (clean.length < 5)
+    throw 'Cleansing error! There should be more clean data!'
+  return { headers: headers, data: clean, used_indices: used_indices }
 }
-
-// OLD
-
-// // Assumung data format is : {status:.. , data: { headers: "x,y,z", data: "a,b,c!!!d,e,f" }}
-// export default function cleanse(filmdata) {
-//     console.log('(1) Recieved the following film data : ');
-//     console.log(filmdata);
-//     let data = filmdata.data;
-//     let splitdata = split_data(data);
-//     console.log('(2) We now have the following (split) film data : ');
-//     console.log(splitdata);
-//     let used_indices = used_data_indices(splitdata);
-//     let headers = used_indices.map((index) => data.headers[index])
-//     console.log('(3) Usable headers: ')
-//     console.log(headers)
-//     if (!headers || headers.length < 3 ) throw 'Cleansing error! There should be more usable headers!';
-//     let trimmed_data = trim_data_width(splitdata, used_indices);
-//     let clean = cleaned_data(trimmed_data);
-//     console.log('(4) We now have the following (clean) film data : ' + JSON.stringify(splitdata));
-//     if (clean.length < 5 ) throw 'Cleansing error! There should be more clean data!';
-//     return {headers: headers, data: clean};
-// }
-
-
