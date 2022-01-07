@@ -1,31 +1,53 @@
-import React, { useState, useEffect } from "react";
-import "./predict_screen.css";
-import { ProgressBar } from "react-bootstrap";
 import * as tf from "@tensorflow/tfjs";
+import { DataFrame } from "pandas-js";
+import React, { useEffect, useState } from "react";
+import { ProgressBar } from "react-bootstrap";
+import * as con from "../../helpers/constants";
 import * as keras from "../../keras/utils";
 import * as pd from "../../pandas/utils";
-import { DataFrame } from "pandas-js";
-import * as con from "../../helpers/constants";
-import styles from "../../flow/styles/nga.module.css";
-import { models } from "@tensorflow/tfjs";
 import {
-  films_data as test_films_data,
   games as testgames,
   game_dict as test_games_dict,
 } from "../../test/testdata";
+import "./predict_screen.css";
+
+/* Predict Play Screen */
+
+/* MARK - constants */
+
+// Project info: Determine if build is in Test mode
 const TEST_MODE = con.TEST_MODE;
 
+/* MARK - helpers */
+
+/**
+ * @param {String} s string
+ * @returns the capitalized string
+ */
 const capitalize = (s) => {
   if (typeof s !== "string") return "";
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
-const after = (str, sub) => str.substring(str.indexOf(sub) + sub.length);
+/**
+ * @param {String} str the string
+ * @param {String} sub the substring
+ * @returns the string's contents before the substring
+ */
 const before = (str, sub) => str.substring(0, str.indexOf(sub));
 
+/**
+ * Load the Tensorflow model HTTP reference
+ * @param {String} url
+ * @param {String} model_id
+ * @param {String} model_name
+ * @returns the loaded reference
+ */
 const loadhttp = (url, model_id, model_name) => {
+  // The tensorflow delimiter between directory levels
   const delim = "%2F";
-
+  // Load the tf HTTP reference.
+  // URL format: .../Models%2F[ID]%2F[NAME]%2F
   return tf.io.http(url, {
     weightPathPrefix:
       before(url, "Models") +
@@ -34,141 +56,89 @@ const loadhttp = (url, model_id, model_name) => {
   });
 };
 
+/**
+ * Fetch the Tf model from firebase storage.
+ * @param {FirebaseReference} storage
+ * @param {String} model_id
+ * @param {String} model_name
+ * @returns the Tf model
+ */
 const fetch_model = async (storage, model_id, model_name) => {
+  // Function to fetch download URL
   const model_url = async () =>
     await storage
       .ref(`Models/${model_id}/${model_name}/model.json`)
       .getDownloadURL();
 
+  // Get model URL
   let mu = await model_url();
+  // Load the Tf HTTP reference
   let http = loadhttp(mu, model_id, model_name);
+  // Load the Tf model
   let model = await tf.loadLayersModel(http);
-  console.log("Loaded model.");
   return model;
 };
 
-const mock_form_model = (nforms) => {
-  /*
-    Output = Formation :    10 - 20 - 6
-  */
-
-  const model = tf.sequential();
-
-  model.add(
-    tf.layers.dense({ units: 20, inputShape: [11], activation: "relu" })
-  );
-  model.add(tf.layers.dense({ units: nforms, activation: "softmax" }));
-  model.compile({ optimizer: "sgd", loss: "meanSquaredError" });
-  return model;
-};
-const mock_pt_model = (nforms) => {
-  /*
-    Output = Formation :    14 - 20 - 6
-  */
-
-  const model = tf.sequential();
-
-  model.add(
-    tf.layers.dense({
-      units: 20,
-      inputShape: [11 + nforms],
-      activation: "relu",
-    })
-  );
-  model.add(tf.layers.dense({ units: 2, activation: "softmax" }));
-  model.compile({ optimizer: "sgd", loss: "meanSquaredError" });
-  return model;
-};
-const mock_play_model = (nforms, nplays) => {
-  /*
-    Output = Formation :    14 - 20 - 6
-  */
-
-  const model = tf.sequential();
-
-  model.add(
-    tf.layers.dense({
-      units: 20,
-      inputShape: [11 + nforms],
-      activation: "relu",
-    })
-  );
-  model.add(tf.layers.dense({ units: nplays, activation: "softmax" }));
-  model.compile({ optimizer: "sgd", loss: "meanSquaredError" });
-  return model;
-};
-
+/**
+ * @param {int} dist the distance to endzone
+ * @param {bool} onOurSide whether we are on our side of field
+ * @returns total distance to endzone
+ */
 const ttl_dst = (dist, onOurSide) => {
-  /* Tests: 
-  let tests_pass = [[1,true,99],[49,true,51],
-            [50,false,50],[50,true,50],
-            [1,false,1],[49,false,49]]
-            .map((arr) => ttl_dst(arr[0],arr[1]) === arr[2]).every((val) => val)
-  */
   return onOurSide ? 50 + (50 - dist) : dist;
 };
 
-const data_headers = [
-  "PLAY #",
-  "ODK",
-  "DN",
-  "DIST",
-  "HASH",
-  "YARD LN",
-  "PLAY TYPE",
-  "RESULT",
-  "GN/LS",
-  "OFF FORM",
-  "OFF PLAY",
-  "OFF STR",
-  "PLAY DIR",
-  "GAP",
-  "PASS ZONE",
-  "DEF FRONT",
-  "COVERAGE",
-  "BLITZ",
-  "QTR",
-];
-
+/**
+ * Get the game data.
+ * @param {String} id the game id
+ * @param {FirestoreReference} db firestore reference
+ * @returns {DataFrame} the game data
+ */
 const get_game_dataframe = async (id, db) => {
   console.log("Getting dataframe for ID=", id);
-  var df;
+  // If the app is in test mode, create the df from dummy data
   if (TEST_MODE) {
-    var films_data = pd.pandas_reformat(keras.films_data, data_headers);
-    df = new DataFrame(films_data);
-  } else {
-    var fetched_films = await db.collection("games_data").doc(id).get();
-    fetched_films = fetched_films.data();
-    var films_data = fb_data_to_matrix(fetched_films);
-
-    console.log("Arrived at Film(s) Data:\n", films_data);
-    films_data = pd.pandas_reformat(films_data, data_headers);
-    df = new DataFrame(films_data);
-    console.log("Arrived at DataFrame:\n", df.toString());
+    const films_data = pd.pandas_reformat(keras.films_data, con.DATA_HEADERS);
+    return new DataFrame(films_data);
   }
-
+  // Get the game data from firestore
+  var fetched_films = await db.collection("games_data").doc(id).get();
+  // extract the data
+  fetched_films = fetched_films.data();
+  // convert the firebase data into a 2D matrix
+  var films_data = fb_data_to_matrix(fetched_films);
+  console.log("Arrived at Film(s) Data:\n", films_data);
+  // organize the matrix into a pandas df (given pre-determined headers)
+  films_data = pd.pandas_reformat(films_data, con.DATA_HEADERS);
+  const df = new DataFrame(films_data);
+  console.log("Arrived at Film DataFrame:\n", df.toString());
   return df;
 };
 
+/**
+ * Fetch a game's info from Firestore.
+ * @param {String} id the game id
+ * @param {FirestoreReference} db the database ref
+ * @returns {JSON} the game info
+ */
 const get_game_info = async (id, db) => {
-  var fetched_info;
-
-  if (TEST_MODE) {
-    fetched_info = {
+  // If app is in test mode, return dummy data
+  if (TEST_MODE)
+    return {
       dictionary: test_games_dict,
       created: "today",
     };
-  } else {
-    fetched_info = await db.collection("games_info").doc(id).get();
-    fetched_info = fetched_info.data();
-    console.log(fetched_info);
-  }
-
+  // fetch game info from firestore
+  var fetched_info = await db.collection("games_info").doc(id).get();
+  // extract data
+  fetched_info = fetched_info.data();
   return fetched_info;
 };
 
-/*
-  Expecting format:
+/**
+ * Convert firebase-formatted data into a std 2D Matrix format
+ * 
+ * Expecting format:
 
     {
     data: [
@@ -186,18 +156,24 @@ const get_game_info = async (id, db) => {
       }
     ]
   }
-*/
+
+ * @param {JSON} fb_data the firebase data
+ * @param {bool} concat whether to flatten the data
+ * @returns the matrix of data
+ */
 const fb_data_to_matrix = (fb_data, concat = true) => {
   console.log("Recieved Firestore data: \n", fb_data);
 
+  // Convert the data
   const data = fb_data["data"].map((film) => {
     return film["data"].map((row) => row["0"]);
   });
-
+  // Recursively simplify the data via concatenation, if necessary
   if (concat) return [].concat.apply([], data);
   else return data;
 };
 
+// Define basis state for UI
 const INIT_STATE = {
   models: {
     off_form: null,
@@ -224,6 +200,7 @@ export default function Predict_screen(props) {
     //...
   }
 
+  // Setup screen variables
   const [games, setGames] = useState(null);
   const [currgame, setcurrgame] = useState(null);
   const [form, setForm] = useState(null);
@@ -236,32 +213,35 @@ export default function Predict_screen(props) {
   const [hash, setHash] = useState("L");
   const [ppt, setPPT] = useState("Run");
   const [ourSide, setSide] = useState(false); // Ball in Offense's own territory
-  const [made_change, setchanged] = useState(true)
+  const [made_change, setchanged] = useState(true);
 
   const [state, setState] = useState(INIT_STATE);
+  // progress on fetching the Tf models
   const [fetching_models, set_fetching_models] = useState(null);
-
+  // ptr-alignment results
   const [pre_align_results, setpar] = useState(null);
 
+  // Get initial data: User's Games
   useEffect(() => {
+    // If app is in test mode, retrieve dummy games
     if (TEST_MODE) {
-      const run = async () => {
-        const sample = (arr) => arr[Math.floor(Math.random() * arr.length)];
-        setGames(testgames);
-        // await selected_game(testgames[2]);
-        // await generate_form_prediction();
-        // await generate_play_prediction(sample(test_games_dict["OFF_FORM"]));
-      };
-      run();
-    } else {
-      con.games_get(uid).then((response) => {
-        console.log("Retrieved games ", response["data"]);
-        setGames(response["data"]);
-      });
+      setGames(testgames);
+      return;
     }
-  }, [setGames, uid]); 
+    // Get all games for the user
+    con.games_get(uid).then((response) => {
+      setGames(response["data"]);
+    });
+  }, [setGames, uid]);
 
+  /**
+   * Prepare the user selection to be put into
+   * a Tf model
+   * @param {bool} withForm whether the formation should be included in the compiled result.
+   * @returns the compiled input (flattened, scaled, etc)
+   */
   const compile_input = (withForm = null) => {
+    // Ensure all data is present. Checking HASH.
     if (!state.dicts.hash) {
       alert("One moment..");
       return;
@@ -290,36 +270,18 @@ export default function Predict_screen(props) {
     let dst_scaled = dist / 25;
     let qtr_scaled = qtr / 4;
 
-    console.log("Compiling configuration.");
-    console.log(
-      "Down: ",
-      dn_scaled,
-      "\n",
-      "Dist: ",
-      dst_scaled,
-      "\n",
-      "D2E : ",
-      d2e,
-      "\n",
-      "Hash: ",
-      mdf_hash,
-      "\n",
-      "PPT : ",
-      mdf_ppt,
-      "\n",
-      "QTR : ",
-      qtr_scaled,
-      "\n",
-      "ScDf: ",
-      scorediff,
-      "\n",
-      "Form: ",
-      mdf_form,
-      "\n"
-    );
-
+    // These inputs must now go into a neural network.
+    // Compile them into a 1-D Array.
     const args = !withForm
-      ? keras.compileargs(dn_scaled, dst_scaled, d2e, mdf_hash, mdf_ppt, qtr_scaled, scorediff)
+      ? keras.compileargs(
+          dn_scaled,
+          dst_scaled,
+          d2e,
+          mdf_hash,
+          mdf_ppt,
+          qtr_scaled,
+          scorediff
+        )
       : keras.compileargs(
           dn_scaled,
           dst_scaled,
@@ -333,15 +295,22 @@ export default function Predict_screen(props) {
     return args;
   };
 
+  /**
+   * Get the model predictions.
+   * @param {Model} model the Tf model
+   * @param {Array} dict the potential predicted outputs
+   * @param {bool} withForm whether the formation should be included as an input
+   * @returns the model predictions.
+   */
   const get_predictions = async (model, dict, withForm = null) => {
     // Compile input
     const input = compile_input(withForm);
-    // Should pass compliance assertion
-    const inputShape = model.inputLayers.length > 0 ? 
-      model.inputLayers[0].batchInputShape[1]
-      : model.layers[0].batchInputShape[1];
+    // Should pass compliance assertion (catches input compile issue)
+    const inputShape =
+      model.inputLayers.length > 0
+        ? model.inputLayers[0].batchInputShape[1]
+        : model.layers[0].batchInputShape[1];
     if (input.length !== inputShape) {
-      console.log(model);
       let msg =
         'Model inputs != "Compiled Inputs". Provided ' +
         input.length +
@@ -370,51 +339,54 @@ export default function Predict_screen(props) {
     return mapped_predictions;
   };
 
+  /**
+   * @returns the component for Run/Pass prediction
+   */
   const get_run = () => {
     if (form == null) return <div> Waiting on formation selection.. </div>;
     else
       return (
         <div>
           {/* Results */}
-          {
-              Number.isNaN(form.run_prob) || form.run_prob >= 0.5 ? (
-                <div class="lt-run-time-header">
-                <div style={{fontWeight: 'bold', fontSize: '24px'}}>Run</div>
-                <div style={{fontSize: '24px'}}>
-                  {Number.isNaN(form.run_prob)
-                    ? "NO DATA"
-                    : Math.round(form.run_prob * 100)}
-                  %
-                </div>
-                <div style={{fontWeight: 'bold', fontSize: '24px'}}>Pass</div>
-                <div style={{fontSize: '24px'}}>
-                  {Number.isNaN(form.run_prob)
-                    ? "NO DATA"
-                    : 100 - Math.round(form.run_prob * 100)}
-                  %
-                </div>
+          {Number.isNaN(form.run_prob) || form.run_prob >= 0.5 ? (
+            <div class="lt-run-time-header">
+              <div style={{ fontWeight: "bold", fontSize: "24px" }}>Run</div>
+              <div style={{ fontSize: "24px" }}>
+                {Number.isNaN(form.run_prob)
+                  ? "NO DATA"
+                  : Math.round(form.run_prob * 100)}
+                %
               </div>
-            ) : (
-              <div class="lt-run-time-header">
-                <div style={{fontWeight: 'bold', fontSize: '18px'}}>Pass</div>
-                <div>
-                  {Number.isNaN(form.run_prob)
-                    ? "NO DATA"
-                    : 100 - Math.round(form.run_prob * 100)}
-                  %
-                </div>
-                <div style={{fontWeight: 'bold', fontSize: '18px'}}>Run</div>
-                <div>
-                  {Number.isNaN(form.run_prob)
-                    ? "NO DATA"
-                    : Math.round(form.run_prob * 100)}
-                  %
-                </div>
+              <div style={{ fontWeight: "bold", fontSize: "24px" }}>Pass</div>
+              <div style={{ fontSize: "24px" }}>
+                {Number.isNaN(form.run_prob)
+                  ? "NO DATA"
+                  : 100 - Math.round(form.run_prob * 100)}
+                %
               </div>
-            )
-          }
-          
-          <div class="wider" style={{fontSize: '16px', fontWeight: 'bold'}}>Top 3 Plays</div>
+            </div>
+          ) : (
+            <div class="lt-run-time-header">
+              <div style={{ fontWeight: "bold", fontSize: "18px" }}>Pass</div>
+              <div>
+                {Number.isNaN(form.run_prob)
+                  ? "NO DATA"
+                  : 100 - Math.round(form.run_prob * 100)}
+                %
+              </div>
+              <div style={{ fontWeight: "bold", fontSize: "18px" }}>Run</div>
+              <div>
+                {Number.isNaN(form.run_prob)
+                  ? "NO DATA"
+                  : Math.round(form.run_prob * 100)}
+                %
+              </div>
+            </div>
+          )}
+
+          <div class="wider" style={{ fontSize: "16px", fontWeight: "bold" }}>
+            Top 3 Plays
+          </div>
           {form.plays.map((play) => (
             <div class="lt-run-time-data">
               <div>{play.name ? capitalize(play.name) : "NO DATA"}</div>
@@ -428,18 +400,25 @@ export default function Predict_screen(props) {
       );
   };
 
+  /**
+   * Change the formation (and generate predictions)
+   * @param {String} toName the formation name
+   */
   const changeFormation = (toName) => {
     generate_play_prediction(toName);
-    // setForm(FIs.filter((form) => form.name === toName)[0]);
   };
 
+  /**
+   * Generate the formation prediction
+   */
   const generate_form_prediction = async () => {
-    setchanged(false)
+    // Set loading..
+    setchanged(false);
+    // If we have no dataframe, still loading data. Exit.
     if (!state.df) {
       alert("One moment..");
       return;
     }
-    console.log("Gen Pred for Frame: ", state.df.toString());
     // Get Predictions
     const predictions = await get_predictions(
       state.models.off_form,
@@ -461,13 +440,16 @@ export default function Predict_screen(props) {
       };
     });
 
-    console.log("Prediction info:", prediction_info);
-
+    // Set the prediction info
     setpar(prediction_info);
-    return null;
   };
 
+  /**
+   * Generate the play prediction
+   * @param {String} selected_formation
+   */
   const generate_play_prediction = async (selected_formation) => {
+    // Verify the models have all loaded. If not, exit.
     if (
       !(
         state.models.play_type &&
@@ -478,21 +460,24 @@ export default function Predict_screen(props) {
       alert("One moment..");
       return;
     }
-    // Get Predictions
+    // Get Predictions for Play Type
     const pt_predictions = await get_predictions(
       state.models.play_type,
       state.dicts.play_type,
       selected_formation
     );
+    // Get Predictions for Offensive Play
     const play_predictions = await get_predictions(
       state.models.off_play,
       state.dicts.off_play,
       selected_formation
     );
+    // Get 3 most likely plays.
     var top_play_predictions = play_predictions
       .sort((a, b) => (a.prob > b.prob ? -1 : a.prob === b.prob ? 0 : 1))
       .slice(0, 3);
 
+    // Get probability of run.
     const run_prob = pt_predictions.filter(
       (item) => item.name.toLowerCase() === "run"
     )[0].prob;
@@ -503,14 +488,20 @@ export default function Predict_screen(props) {
       plays: top_play_predictions,
     };
 
-    console.log("Prediction info:", prediction_info);
-
+    // Set Play prediction info
     setForm(prediction_info);
   };
 
+  /**
+   *
+   * @param {Object} game the db-loaded Game object
+   */
   const selected_game = async (game) => {
+    // Get the game ID
     let game_id = game.id;
+    // Set the game as the current game
     setcurrgame(game);
+    // Set the UI to loading
     set_fetching_models(true);
     try {
       // Load DataFrame
@@ -519,6 +510,7 @@ export default function Predict_screen(props) {
       // Load Dictionaries / Scalers
       const info = await get_game_info(game_id, props.firebase.db);
 
+      // load data from db response
       const dict = info["dictionary"];
       const dicts = {
         off_form: dict["OFF_FORM"],
@@ -528,9 +520,9 @@ export default function Predict_screen(props) {
         hash: dict["HASH"],
       };
 
-      console.log("Dictionary: ", dict);
-
+      // Load the models (Pre-Align Formation, Post-Align Play Type, Post-Align Play)
       var paf, pat, pap;
+      // If app is NOT in test mode, pull live data.
       if (!TEST_MODE) {
         // Load Models (must be done later if not in test)
         paf = await fetch_model(
@@ -545,11 +537,12 @@ export default function Predict_screen(props) {
           "postalignplay"
         );
       } else {
+        // load mock Tf models
         const forms = dict["OFF_FORM"].length;
         const plays = dict["OFF_PLAY"].length;
-        paf = mock_form_model(forms);
-        pat = mock_pt_model(forms);
-        pap = mock_play_model(forms, plays);
+        paf = keras.mock_form_model(forms);
+        pat = keras.mock_pt_model(forms);
+        pap = keras.mock_play_model(forms, plays);
       }
 
       const models = {
@@ -558,12 +551,15 @@ export default function Predict_screen(props) {
         off_play: pap,
       };
 
+      // Update the view state
       setState({ models: models, dicts: dicts, df: frame });
     } catch (e) {
+      // If errored, set view as no longer fetching.
       set_fetching_models(false);
     }
   };
 
+  // Reset UI to initial state.
   const clear_all = () => {
     setcurrgame(null);
     setForm(null);
@@ -576,19 +572,22 @@ export default function Predict_screen(props) {
     setHash("L");
     setPPT("Run");
     setState(INIT_STATE);
-    setpar(null)
+    setpar(null);
   };
 
+  /** Set the UI as having changed. */
   const changed = () => {
-    setchanged(true)
-  }
+    setchanged(true);
+  };
 
+  // Display the user's games they can pick from.
   const c_Games = games
     ? games.map((game) => (
         <div onClick={() => selected_game(game)}>{game.name}</div>
       ))
     : null;
 
+  // Determine if all backend data & models have been loaded.
   const all_fetched =
     state.models.off_form &&
     state.models.play_type &&
@@ -624,7 +623,7 @@ export default function Predict_screen(props) {
             <p
               style={{ textDecoration: "underline" }}
               onClick={() => clear_all()}
-              class='lt-pointer'
+              class="lt-pointer"
             >
               Change
             </p>
@@ -637,14 +636,20 @@ export default function Predict_screen(props) {
               <input
                 class="input-box"
                 name="score-us"
-                onChange={(ev) => {changed(); setScoreUs(ev.target.value)}}
+                onChange={(ev) => {
+                  changed();
+                  setScoreUs(ev.target.value);
+                }}
                 type="number"
                 value={scoreUs}
               />
               <input
                 class="input-box"
                 name="score-them"
-                onChange={(ev) => {changed(); setScoreThem(ev.target.value)}}
+                onChange={(ev) => {
+                  changed();
+                  setScoreThem(ev.target.value);
+                }}
                 type="number"
                 value={scoreThem}
               />
@@ -654,11 +659,10 @@ export default function Predict_screen(props) {
               <select
                 class="input-box"
                 onChange={(ev) => {
-                  changed(); 
-                  if (!isNaN(ev.target.value)) 
-                    setqtr(parseInt(ev.target.value))
-                  }
-                }
+                  changed();
+                  if (!isNaN(ev.target.value))
+                    setqtr(parseInt(ev.target.value));
+                }}
               >
                 {[1, 2, 3, 4].map((item) => (
                   <option value={item}>{item}</option>
@@ -688,7 +692,7 @@ export default function Predict_screen(props) {
               }}
             ></div>
           </div>
-          
+
           {/* SCENARIO */}
 
           {/* Scenario - Group Headers */}
@@ -708,10 +712,10 @@ export default function Predict_screen(props) {
                   <select
                     class="input-box"
                     onChange={(ev) => {
-                      changed(); 
-                      if (!isNaN(ev.target.value)) 
-                        setdn(parseInt(ev.target.value))
-                      }}
+                      changed();
+                      if (!isNaN(ev.target.value))
+                        setdn(parseInt(ev.target.value));
+                    }}
                   >
                     {[1, 2, 3, 4].map((item) => (
                       <option value={item}>{item} </option>
@@ -720,10 +724,10 @@ export default function Predict_screen(props) {
                   <input
                     class="input-box"
                     onChange={(ev) => {
-                      changed(); 
-                      if (!isNaN(ev.target.value)) 
-                        setdist(parseInt(ev.target.value))
-                      }}
+                      changed();
+                      if (!isNaN(ev.target.value))
+                        setdist(parseInt(ev.target.value));
+                    }}
                     value={dist}
                   />
                 </div>
@@ -734,13 +738,19 @@ export default function Predict_screen(props) {
                   <input
                     class="input-box"
                     onChange={(ev) => {
-                      changed(); 
-                      if (!isNaN(ev.target.value)) 
-                        setydln(parseInt(ev.target.value))
-                      }}
+                      changed();
+                      if (!isNaN(ev.target.value))
+                        setydln(parseInt(ev.target.value));
+                    }}
                     value={ydln}
                   />
-                  <button class="input-box" onClick={() => {changed(); setSide(!ourSide)}}>
+                  <button
+                    class="input-box"
+                    onClick={() => {
+                      changed();
+                      setSide(!ourSide);
+                    }}
+                  >
                     {ourSide ? "Off." : "Def."}
                   </button>
                 </div>
@@ -749,7 +759,10 @@ export default function Predict_screen(props) {
                 <div>Hash</div>
                 <select
                   class="input-box"
-                  onChange={(ev) => {changed(); setHash(ev.target.value)}}
+                  onChange={(ev) => {
+                    changed();
+                    setHash(ev.target.value);
+                  }}
                 >
                   {state.dicts.hash
                     ? state.dicts.hash.map((item) => (
@@ -762,7 +775,10 @@ export default function Predict_screen(props) {
                 <div>Last Play</div>
                 <select
                   class="input-box"
-                  onChange={(ev) => {changed(); setPPT(ev.target.value)}}
+                  onChange={(ev) => {
+                    changed();
+                    setPPT(ev.target.value);
+                  }}
                 >
                   {state.dicts.prev_play_type
                     ? state.dicts.prev_play_type.map((item) => (
@@ -772,16 +788,16 @@ export default function Predict_screen(props) {
                 </select>
               </div>
               <div>
-              <div>&#8203;</div>
+                <div>&#8203;</div>
                 <div>
-                <button
-                class="stdbtn"
-                onClick={() => generate_form_prediction()}
-                disabled={!made_change}
-                style={{ float: "right", fontSize: '18px' }}
-              >
-                Generate
-              </button>
+                  <button
+                    class="stdbtn"
+                    onClick={() => generate_form_prediction()}
+                    disabled={!made_change}
+                    style={{ float: "right", fontSize: "18px" }}
+                  >
+                    Generate
+                  </button>
                 </div>
               </div>
             </div>
@@ -793,7 +809,7 @@ export default function Predict_screen(props) {
             style={{ justifyItems: "center" }}
           >
             <div>
-              <div >Formation</div>
+              <div>Formation</div>
               <select
                 class="input-box wide-box"
                 onChange={(opt) => changeFormation(opt.target.value)}
@@ -808,7 +824,7 @@ export default function Predict_screen(props) {
           </div>
 
           {/* RESULTS */}
-          
+
           {/* Results - Group Headers */}
           <div class="lt-scenerio-head">
             <div style={{ float: "left" }}>Results</div>
@@ -820,52 +836,50 @@ export default function Predict_screen(props) {
           {/* Results - Pre-Align Group */}
           <div class="lt-prediction lt-scenario-platform">
             <div class="lt-prediction-data">
-              <div style={{fontWeight: 'bold', fontSize: '18px'}}>FORM</div>
-              <div style={{fontWeight: 'bold', fontSize: '18px'}}>TYPE</div>
-              <div style={{fontWeight: 'bold', fontSize: '18px'}}>PLAY</div>
+              <div style={{ fontWeight: "bold", fontSize: "18px" }}>FORM</div>
+              <div style={{ fontWeight: "bold", fontSize: "18px" }}>TYPE</div>
+              <div style={{ fontWeight: "bold", fontSize: "18px" }}>PLAY</div>
             </div>
             <hr />
-            {pre_align_results
-              ? pre_align_results.map((item) => {
-                
+            {pre_align_results ? (
+              pre_align_results.map((item) => {
                 const pass_component = (
                   <div>
-                          Pass (
-                          {Number.isNaN(item.run_prob)
-                            ? "NO DATA"
-                            : 100 - Math.round(item.run_prob * 100) + "%"}
-                          )
-                        </div>
-                )
+                    Pass (
+                    {Number.isNaN(item.run_prob)
+                      ? "NO DATA"
+                      : 100 - Math.round(item.run_prob * 100) + "%"}
+                    )
+                  </div>
+                );
                 const run_component = (
                   <div>
-                          Run (
-                          {Number.isNaN(item.run_prob)
-                            ? "NO DATA"
-                            : Math.round(item.run_prob * 100) + "%"}
-                          )
-                        </div>
-                )
+                    Run (
+                    {Number.isNaN(item.run_prob)
+                      ? "NO DATA"
+                      : Math.round(item.run_prob * 100) + "%"}
+                    )
+                  </div>
+                );
 
                 var runpass_component = null;
-                if (Number.isNaN(item.run_prob) || 
-                item.run_prob >= 0.5) {
+                if (Number.isNaN(item.run_prob) || item.run_prob >= 0.5) {
                   runpass_component = (
                     <div>
                       {run_component}
                       {pass_component}
                     </div>
-                  )
+                  );
                 } else {
                   runpass_component = (
                     <div>
                       {pass_component}
                       {run_component}
                     </div>
-                  )
+                  );
                 }
-                
-                return  (
+
+                return (
                   <div>
                     <div class="lt-prediction-data">
                       <div>
@@ -892,14 +906,14 @@ export default function Predict_screen(props) {
                     </div>
                     <hr />
                   </div>
-                )
+                );
               })
-              : <p>Waiting on scenario selection..</p>}
+            ) : (
+              <p>Waiting on scenario selection..</p>
+            )}
           </div>
 
-          <div class="lt-run-time lt-scenario-platform">
-            {get_run()}
-          </div> 
+          <div class="lt-run-time lt-scenario-platform">{get_run()}</div>
         </div>
       ) : fetching_models ? (
         <h2>Loading your info..</h2>

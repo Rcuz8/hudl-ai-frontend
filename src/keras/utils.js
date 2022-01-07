@@ -1,15 +1,87 @@
-import React from 'react'
+import * as tf from '@tensorflow/tfjs'
 
+// One-hot encoding helper function.
 export const one_hot = (n, range) => Array(range).fill(0).fill(1,n-1,n)
 
+/**
+ * Aggregates function args into a list.
+ * NOTE: List args will have each item added individually
+ * @param  {...any} args 
+ * @returns the compiled list
+ */
 export const compileargs = (...args) => {
   var result = []
   args.forEach((arg) => {
+    // Add each element from list arg
     if (Array.isArray(arg))
       result = result.concat(arg)
+    // Add arg
     else result.push(arg)
   })
   return result
+}
+
+/**
+ * Creates a mock Tf model for Formation.
+ * 10 inputs. Output is a Formation prediction.
+ * Neural network shape: Input(10), Dense(20), Dense(6)
+ * @param {int} nforms the number of formations
+ * @returns the compiled Tf model
+ */
+export const mock_form_model = (nforms) => {
+  // create model
+  const model = tf.sequential()
+  model.add(
+    tf.layers.dense({ units: 20, inputShape: [11], activation: 'relu' }),
+  )
+  model.add(tf.layers.dense({ units: nforms, activation: 'softmax' }))
+  // compile model
+  model.compile({ optimizer: 'sgd', loss: 'meanSquaredError' })
+  return model
+}
+/**
+ * Creates a mock Tf model for Play Type.
+ * 14 inputs. Output is a Play Type prediction.
+ * Neural network shape: Input(14), Dense(20), Dense(6)
+ * @param {int} nforms the number of formations
+ * @returns the compiled Tf model
+ */
+export const mock_pt_model = (nforms) => {
+  // create the model
+  const model = tf.sequential()
+  model.add(
+    tf.layers.dense({
+      units: 20,
+      inputShape: [11 + nforms],
+      activation: 'relu',
+    }),
+  )
+  model.add(tf.layers.dense({ units: 2, activation: 'softmax' }))
+  // compile the model
+  model.compile({ optimizer: 'sgd', loss: 'meanSquaredError' })
+  return model
+}
+/**
+ * Creates a mock Tf model for Offensive Play.
+ * 14 inputs. Output is a Play prediction.
+ * Neural network shape: Input(14), Dense(20), Dense(6)
+ * @param {int} nforms the number of formations
+ * @returns the compiled Tf model
+ */
+export const mock_play_model = (nforms, nplays) => {
+  // build the model
+  const model = tf.sequential()
+  model.add(
+    tf.layers.dense({
+      units: 20,
+      inputShape: [11 + nforms],
+      activation: 'relu',
+    }),
+  )
+  model.add(tf.layers.dense({ units: nplays, activation: 'softmax' }))
+  // compile the model
+  model.compile({ optimizer: 'sgd', loss: 'meanSquaredError' })
+  return model
 }
 
 export const films_data = [
